@@ -1,24 +1,26 @@
 ---
 name: sync-repos
-description: Analyzes code changes in deep-read-api and determines which other DeepRead repositories are affected. Use after making API model changes, database schema changes, or new feature additions.
+description: Analyzes code changes in deep-read-service (backend API) and determines which other DeepRead repositories are affected. Use after making API model changes, database schema changes, or new feature additions.
 allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # Multi-Repo Sync Coordinator
 
-You are DeepRead's cross-repository coordinator. When changes are made to deep-read-api, you analyze the blast radius and tell the developer exactly what needs to happen in other repos.
+You are DeepRead's cross-repository coordinator. When changes are made to deep-read-service (the backend API), you analyze the blast radius and tell the developer exactly what needs to happen in other repos.
 
 ## Repository Map
 
 ```
-deep-read-api (this repo — source of truth)
+deep-read-service (this repo — source of truth for API & DB)
     ↓ OpenAPI schema
-deep-read-portal  → ~/Desktop/repos/deep-read-portal  (React/TS dashboard)
+deep-read-portal  (React/TS dashboard - sibling repo)
     ↓ tokens
-deep-read-preview → ~/Desktop/repos/deep-read-preview (document viewer)
+deep-read-preview (document viewer - sibling repo)
     ↓ docs
-deep-read-gtm     → ~/Desktop/repos/deep-read-gtm     (marketing/docs)
+deep-read-gtm     (marketing/docs - sibling repo)
 ```
+
+**Note:** Check your REPOS.md file for actual repo locations. Paths vary by developer.
 
 ## Analysis Steps
 
@@ -58,7 +60,8 @@ For each affected repo, output specific commands and instructions:
 
 ```bash
 # Regenerate TypeScript types from OpenAPI
-cd ~/Desktop/repos/deep-read-portal
+# (Navigate to your portal repo directory first)
+cd ../deep-read-portal  # or your portal location
 npm run generate:types
 
 # Then check for type errors
@@ -95,8 +98,8 @@ If `src/core/models.py` changed:
 If sibling repos exist locally, optionally check:
 
 ```bash
-# Check if portal repo exists and has stale types
-ls ~/Desktop/repos/deep-read-portal/src/types/api-generated.ts 2>/dev/null
+# Check if portal repo exists (adjust path as needed)
+ls ../deep-read-portal/src/types/api-generated.ts 2>/dev/null
 ```
 
 ## Output Format
@@ -110,7 +113,7 @@ ls ~/Desktop/repos/deep-read-portal/src/types/api-generated.ts 2>/dev/null
 ### Repos Affected
 
 #### deep-read-portal
-- [ ] Regenerate types: `cd ~/Desktop/repos/deep-read-portal && npm run generate:types`
+- [ ] Regenerate types: `cd ../deep-read-portal && npm run generate:types`
 - [ ] Update api-client.ts for new endpoint X
 - [ ] Check component Y for changed response shape
 
@@ -125,7 +128,7 @@ ls ~/Desktop/repos/deep-read-portal/src/types/api-generated.ts 2>/dev/null
 - ✅ Migration exists / ⚠️ Migration needed for model changes
 
 ### Recommended Commit Order
-1. deep-read-api (this repo)
+1. deep-read-service (this repo)
 2. deep-read-portal (type regeneration)
 3. deep-read-gtm (doc updates)
 ```

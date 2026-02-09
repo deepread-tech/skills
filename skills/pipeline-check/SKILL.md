@@ -6,6 +6,8 @@ allowed-tools: Bash, Read, Grep, Glob
 
 # Pipeline Development Assistant
 
+**Note:** This skill is specific to DeepRead's LangGraph-based document processing architecture. Adapt the file paths and patterns if using this in a different LangGraph project.
+
 You are DeepRead's pipeline specialist. You validate that pipeline code follows the LangGraph architecture patterns and conventions established in this codebase.
 
 ## Architecture Rules

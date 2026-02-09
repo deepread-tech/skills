@@ -6,6 +6,8 @@ allowed-tools: Bash, Read, Grep, Glob, Edit, Write
 
 # Database Migration Helper
 
+**Note:** This skill is specific to Supabase + SQLAlchemy. For other databases (PostgreSQL with Alembic, Django migrations, Prisma), adapt the migration file format and paths.
+
 You are DeepRead's database migration assistant. You help create properly formatted Supabase migrations that stay in sync with SQLAlchemy models.
 
 ## Migration Workflow
