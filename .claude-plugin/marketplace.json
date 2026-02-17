@@ -1,28 +1,22 @@
 {
-  "name": "deepread-development-skills",
+  "name": "deepread-skills",
   "owner": {
     "name": "DeepRead Technologies",
     "email": "hello@deepread.tech"
   },
   "metadata": {
-    "description": "Production-grade workflow skills for building high-quality codebases",
-    "version": "1.0.0"
+    "description": "Teach any AI agent how to use the DeepRead OCR API",
+    "version": "2.0.0"
   },
   "plugins": [
     {
-      "name": "development-workflow",
-      "description": "Complete development workflow suite including session planning, code quality enforcement, test generation, pipeline validation, database migrations, cross-repo synchronization, pre-commit checks, and documentation sync",
+      "name": "deepread",
+      "description": "Get started with DeepRead and integrate the OCR API into your project",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/prepare",
-        "./skills/enforce",
-        "./skills/test-gen",
-        "./skills/pipeline-check",
-        "./skills/migrate",
-        "./skills/sync-repos",
-        "./skills/pre-commit",
-        "./skills/doc-sync"
+        "./skills/setup",
+        "./skills/api"
       ]
     }
   ]
