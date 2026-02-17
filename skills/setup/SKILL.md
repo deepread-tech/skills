@@ -6,7 +6,7 @@ allowed-tools: Bash, Read, Write
 
 # Setup DeepRead
 
-You are helping a developer get started with DeepRead — an AI-native OCR API that extracts text and structured data from documents (PDFs, images) with 95%+ accuracy.
+You are helping a developer get started with DeepRead — an AI-native OCR API that extracts text and structured data from documents (PDFs, images) with 97%+ accuracy.
 
 You submit a file, get a job ID, poll for results. Low-confidence fields are flagged for human review instead of guessing wrong.
 

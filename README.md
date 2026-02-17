@@ -28,7 +28,7 @@ After installing, use the slash commands in Claude Code:
 
 ## What is DeepRead
 
-AI-native OCR API. Upload a PDF or image, get back extracted text and structured data. Multi-model consensus pipelines deliver 95%+ accuracy and flag uncertain fields for human review.
+AI-native OCR API. Upload a PDF or image, get back extracted text and structured data. Multi-model consensus pipelines deliver 97%+ accuracy and flag uncertain fields for human review.
 
 **Key features:**
 - Structured extraction via JSON Schema
@@ -38,8 +38,7 @@ AI-native OCR API. Upload a PDF or image, get back extracted text and structured
 - Shareable preview links (no auth needed)
 
 **Links:**
-- API: `https://api.deepread.tech`
-- Dashboard: `https://www.deepread.tech`
+- Dashboard: `https://www.deepread.tech/dashboard`
 - Docs: `https://www.deepread.tech/docs`
 
 ## License
