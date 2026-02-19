@@ -1,8 +1,6 @@
 ---
-name: setup
-description: Get started with DeepRead. Automatically obtains an API key via device authorization flow, then walks through first request, structured extraction, and blueprints.
-allowed-tools: Bash, Read, Write
-user-invocable: true
+description: "Get started with DeepRead OCR. Automatically obtains an API key via device authorization flow (RFC 8628), then walks through first document, structured extraction, and blueprints."
+alwaysApply: false
 ---
 
 # Setup DeepRead
@@ -19,8 +17,8 @@ You are an AI agent helping a developer get started with DeepRead — an AI-nati
 
 You (the agent) obtain an API key on behalf of the user. The user never needs to copy/paste a key — it goes directly to you.
 
-> **CRITICAL — run the entire device flow as ONE Bash tool call.**
-> Shell variables do not persist between tool calls. If you split this across multiple calls, the `device_code` will be lost and you will accidentally call `/v1/agent/device/code` again, getting a new code the user has never seen. Do it all in one script.
+> **CRITICAL — run the entire device flow as ONE terminal command block.**
+> Shell variables do not persist between separate terminal executions. If you split this across multiple calls, the `device_code` will be lost and you will accidentally call `/v1/agent/device/code` again, getting a new code the user has never seen. Do it all in one script.
 
 The complete flow — get code, open browser, poll, print key — in a single script:
 
@@ -28,7 +26,7 @@ The complete flow — get code, open browser, poll, print key — in a single sc
 # Get device code
 dr_response=$(curl -s -X POST https://api.deepread.tech/v1/agent/device/code \
   -H "Content-Type: application/json" \
-  -d '{"agent_name": "Claude Code"}')
+  -d '{"agent_name": "Cursor"}')
 
 dr_device_code=$(echo "$dr_response" | jq -r '.device_code')
 dr_user_code=$(echo "$dr_response" | jq -r '.user_code')
@@ -45,7 +43,7 @@ echo "Opening browser: $dr_uri"
 open "$dr_uri" 2>/dev/null || xdg-open "$dr_uri" 2>/dev/null || echo "Open manually: $dr_uri"
 echo "Waiting for approval of code: $dr_user_code"
 
-# Poll until approved (use dr_ prefix — 'status' is reserved in zsh)
+# Poll until approved (use dr_ prefix to avoid variable name conflicts)
 dr_api_key=""
 for dr_i in $(seq 1 72); do
   sleep "$dr_interval"
@@ -66,7 +64,7 @@ for dr_i in $(seq 1 72); do
 done
 ```
 
-**Variable naming:** Always use a unique prefix (e.g. `dr_`) for all variables in this script. Never use bare `status`, `result`, or `interval` — these are reserved or commonly overloaded in zsh/bash and will cause `read-only variable` errors.
+**Variable naming:** Always use a unique prefix (e.g. `dr_`) for all variables. Never use bare `status`, `result`, or `interval` — these can conflict with shell built-ins.
 
 **Never show the `device_code` to the user.** Only show `user_code` and the browser URL.
 
@@ -103,72 +101,36 @@ In both cases the key goes directly to you — it never appears in chat.
 
 ## Step 2: Send Your First Document
 
-> **IMPORTANT: Split submit and poll into SEPARATE Bash tool calls.**
-> Long-running poll loops block the conversation and give the user no way to interact.
-> Submit first, confirm the job ID, then poll separately.
+> **Split submit and poll into separate steps.** Submit first, confirm the job ID, then poll separately. This avoids long-blocking loops.
 
-### Step 2a: Submit the document (one Bash call)
+### Step 2a: Submit the document
 
 ```bash
 DR_API_KEY=$(grep ^DEEPREAD_API_KEY .env | cut -d= -f2)
 
-dr_submit=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST https://api.deepread.tech/v1/process \
+curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST https://api.deepread.tech/v1/process \
   -H "X-API-Key: $DR_API_KEY" \
-  -F "file=@document.pdf")
-
-echo "$dr_submit"
+  -F "file=@document.pdf"
 ```
 
-Tell the user the job ID and that processing takes 2-3 minutes. Then move on to polling.
+Tell the user the job ID and that processing takes 2-3 minutes.
 
-### Step 2b: Poll for results (separate Bash call)
+### Step 2b: Check results
 
-> **Prefer `run_in_background: true`** for the poll loop so the conversation isn't blocked. If the user rejects a long-running poll, just do a single status check instead.
+> **Guard against empty job ID.** If `dr_job_id` is empty or "null", stop — don't poll.
 
-> **Guard against empty job ID.** If `dr_job_id` is empty or "null", stop immediately — don't loop.
-
-> **Use `python3` for parsing results, not `jq`.** Job responses can be 200KB+ and `jq` may choke with parse errors on large payloads. Always save to a temp file first.
+> **Use `python3` for parsing results, not `jq`.** Job responses can be 200KB+ and `jq` may choke on large payloads. Save to a temp file first.
 
 ```bash
 DR_API_KEY=$(grep ^DEEPREAD_API_KEY .env | cut -d= -f2)
 dr_job_id="THE_JOB_ID"
 
-# Guard: bail if job ID is empty
 if [ -z "$dr_job_id" ] || [ "$dr_job_id" = "null" ]; then
-  echo "ERROR: No job ID — submit may have failed. Check the submit response."
+  echo "ERROR: No job ID — submit may have failed."
   exit 1
 fi
 
-for dr_i in $(seq 1 40); do
-  sleep 5
-  dr_poll=$(curl -s "https://api.deepread.tech/v1/jobs/$dr_job_id" -H "X-API-Key: $DR_API_KEY")
-  dr_job_status=$(echo "$dr_poll" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status','unknown'))")
-  echo "attempt=$dr_i status=$dr_job_status"
-  if [ "$dr_job_status" = "completed" ] || [ "$dr_job_status" = "failed" ]; then
-    echo "$dr_poll" > /tmp/deepread_result.json
-    python3 -c "
-import json
-with open('/tmp/deepread_result.json') as f:
-    data = json.load(f)
-print(json.dumps({
-    'status': data.get('status'),
-    'preview_url': data.get('preview_url'),
-    'page_count': len(data.get('result', {}).get('pages', [])) if data.get('result') else 0,
-    'text_preview': (data.get('result', {}).get('text', '') or '')[:500],
-}, indent=2))
-"
-    break
-  fi
-done
-```
-
-### If the user says "check now" or the poll was rejected
-
-Don't start a new poll loop — just do a single fetch:
-
-```bash
-DR_API_KEY=$(grep ^DEEPREAD_API_KEY .env | cut -d= -f2)
-curl -s "https://api.deepread.tech/v1/jobs/JOB_ID" -H "X-API-Key: $DR_API_KEY" > /tmp/deepread_result.json
+curl -s "https://api.deepread.tech/v1/jobs/$dr_job_id" -H "X-API-Key: $DR_API_KEY" > /tmp/deepread_result.json
 python3 -c "
 import json
 with open('/tmp/deepread_result.json') as f:
@@ -185,6 +147,8 @@ elif data.get('status') == 'failed':
 "
 ```
 
+If still `queued` or `processing`, wait and check again.
+
 Supports PDF, PNG, JPG, JPEG. Max 15MB (free) / 50MB (paid).
 
 ---
@@ -193,12 +157,12 @@ Supports PDF, PNG, JPG, JPEG. Max 15MB (free) / 50MB (paid).
 
 Add a `schema` parameter with a JSON Schema. Field descriptions guide the AI — the better the description, the better the extraction.
 
-### Step 3a: Submit with schema (one Bash call)
+### Step 3a: Submit with schema
 
 ```bash
 DR_API_KEY=$(grep ^DEEPREAD_API_KEY .env | cut -d= -f2)
 
-dr_submit=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST https://api.deepread.tech/v1/process \
+curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST https://api.deepread.tech/v1/process \
   -H "X-API-Key: $DR_API_KEY" \
   -F "file=@invoice.pdf" \
   -F 'schema={
@@ -208,14 +172,12 @@ dr_submit=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST https://api.deepread
       "total": {"type": "number", "description": "Total amount due in dollars"},
       "due_date": {"type": "string", "description": "Payment due date"}
     }
-  }')
-
-echo "$dr_submit"
+  }'
 ```
 
-### Step 3b: Fetch structured results (separate Bash call)
+### Step 3b: Fetch structured results
 
-Same split pattern as Step 2 — poll separately or do a single check when the user says the job is done:
+Same pattern as Step 2b — use `python3` to parse:
 
 ```bash
 DR_API_KEY=$(grep ^DEEPREAD_API_KEY .env | cut -d= -f2)
@@ -226,18 +188,8 @@ with open('/tmp/deepread_structured_result.json') as f:
     data = json.load(f)
 print('Status:', data.get('status'))
 if data.get('status') == 'completed':
-    print()
-    print('=== STRUCTURED DATA ===')
     fields = data.get('result', {}).get('data', {})
-    if fields:
-        print(json.dumps(fields, indent=2))
-    else:
-        print('No structured data returned')
-    print()
-    meta = data.get('metadata', {})
-    print('=== METADATA ===')
-    print(json.dumps({k: meta[k] for k in ['page_count','pipeline','review_percentage','fields_requiring_review','total_fields'] if k in meta}, indent=2))
-    print()
+    if fields: print(json.dumps(fields, indent=2))
     print('Preview:', data.get('preview_url', 'N/A'))
 elif data.get('status') == 'failed':
     print('Error:', data.get('error'))
@@ -290,7 +242,7 @@ Use `schema` OR `blueprint_id`, not both.
 
 ## What's Next
 
-Use `/api` for the full reference — all endpoints, webhooks, error handling, blueprints API, and code examples in Python, JavaScript, and cURL.
+See the `deepread-api` rule for the full reference — all endpoints, webhooks, error handling, blueprints API, and code examples in Python, JavaScript, and cURL.
 
 ## Help the Developer
 
@@ -298,4 +250,4 @@ Use `/api` for the full reference — all endpoints, webhooks, error handling, b
 - Has API key → help send first request (Step 2)
 - Wants structured data → help write a JSON Schema with good field descriptions (Step 3)
 - Wants better accuracy → explain blueprints and optimizer (Step 4)
-- Wants full integration → use `/api` for complete reference
+- Wants full integration → see the `deepread-api` rule for complete reference
