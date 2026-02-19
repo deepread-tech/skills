@@ -1,8 +1,6 @@
 ---
-name: setup
-description: Get started with DeepRead. Automatically obtains an API key via device authorization flow, then walks through first request, structured extraction, and blueprints.
-allowed-tools: Bash, Read, Write
-user-invocable: true
+description: "Get started with DeepRead OCR. Automatically obtains an API key via device authorization flow (RFC 8628), then walks through first document, structured extraction, and blueprints."
+alwaysApply: false
 ---
 
 # Setup DeepRead
@@ -103,7 +101,7 @@ Once you receive the `api_key`, save it securely. This is a one-time retrieval �
 
 **Already logged in:** Opens the URL → code is auto-validated → sees your agent name + Approve/Deny → clicks Approve → redirected to dashboard. The key goes to you on your next poll.
 
-**Not logged in:** Sees "Sign in required" → signs in or creates an account → redirected back to the activate page with the code pre-filled → clicks Approve.
+**Not logged in:** Sees "Sign in required" → signs in or creates an account → redirected back with the code pre-filled → clicks Approve.
 
 In both cases the key goes directly to you — it never appears in chat.
 
@@ -210,7 +208,7 @@ Use `schema` OR `blueprint_id`, not both.
 
 ## What's Next
 
-Use `/api` for the full reference — all endpoints, webhooks, error handling, blueprints API, and code examples in Python, JavaScript, and cURL.
+See the `deepread-api` rule for the full reference — all endpoints, webhooks, error handling, blueprints API, and code examples in Python, JavaScript, and cURL.
 
 ## Help the Developer
 
@@ -218,4 +216,4 @@ Use `/api` for the full reference — all endpoints, webhooks, error handling, b
 - Has API key → help send first request (Step 2)
 - Wants structured data → help write a JSON Schema with good field descriptions (Step 3)
 - Wants better accuracy → explain blueprints and optimizer (Step 4)
-- Wants full integration → use `/api` for complete reference
+- Wants full integration → see the `deepread-api` rule for complete reference

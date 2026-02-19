@@ -1,8 +1,6 @@
 ---
-name: api
-description: Full DeepRead API reference. All endpoints, auth, request/response formats, blueprints, webhooks, error handling, and code examples.
-allowed-tools: Bash, Read, Write
-user-invocable: true
+description: "Full DeepRead API reference. All endpoints, auth, request/response formats, blueprints, webhooks, error handling, and code examples in Python, JS, and cURL."
+alwaysApply: false
 ---
 
 # DeepRead API Reference
@@ -253,9 +251,9 @@ Returns blueprint with all versions, active version schema, and accuracy metrics
   "name": "utility_invoice",
   "description": "Utility bill extraction",
   "document_type": "invoice",
-  "initial_schema": {"type": "object", "properties": {...}},
+  "initial_schema": {"type": "object", "properties": {}},
   "training_documents": ["path1.pdf", "path2.pdf"],
-  "ground_truth_data": [{"vendor": "Electric Co", "total": 150.00}, ...],
+  "ground_truth_data": [{"vendor": "Electric Co", "total": 150.00}],
   "target_accuracy": 95.0,
   "max_iterations": 5,
   "max_cost_usd": 10.0
@@ -624,21 +622,19 @@ console.log(job); // {id: "...", status: "queued"}
 ### Agent Device Flow (cURL)
 
 ```bash
-# Step 1: Request a device code — save the full response
-response=$(curl -s -X POST https://api.deepread.tech/v1/agent/device/code \
+# Step 1: Request a device code
+curl -s -X POST https://api.deepread.tech/v1/agent/device/code \
   -H "Content-Type: application/json" \
-  -d '{"agent_name": "my-agent"}')
-device_code=$(echo "$response" | jq -r '.device_code')
-verification_uri_complete=$(echo "$response" | jq -r '.verification_uri_complete')
-interval=$(echo "$response" | jq -r '.interval')
+  -d '{"agent_name": "my-agent"}'
+# Response: {"device_code": "abc...", "verification_uri_complete": "https://www.deepread.tech/activate?code=HXKP-3MNV", ...}
 
-# Step 2: Open the browser (use the saved URL — code is pre-filled, user clicks Approve)
-open "$verification_uri_complete"  # macOS / xdg-open on Linux
+# Step 2: Open the URL (code is pre-filled, user just clicks Approve)
+open "https://www.deepread.tech/activate?code=HXKP-3MNV"  # macOS
 
-# Step 3: Poll for the key (repeat every $interval seconds until api_key is returned)
+# Step 3: Poll for the key (repeat until api_key is returned)
 curl -s -X POST https://api.deepread.tech/v1/agent/device/token \
   -H "Content-Type: application/json" \
-  -d "{\"device_code\": \"$device_code\"}"
+  -d '{"device_code": "abc..."}'
 # → {"error": "authorization_pending"}  (keep polling)
 # → {"api_key": "sk_live_...", "key_prefix": "sk_live_abc..."}  (done!)
 
@@ -646,30 +642,6 @@ curl -s -X POST https://api.deepread.tech/v1/agent/device/token \
 curl -X POST https://api.deepread.tech/v1/process \
   -H "X-API-Key: sk_live_..." \
   -F "file=@invoice.pdf"
-```
-
-### Webhook Receiver (Python / Flask)
-
-```python
-from flask import Flask, request
-import requests
-
-app = Flask(__name__)
-API_KEY = "sk_live_YOUR_KEY"
-
-@app.route("/webhook", methods=["POST"])
-def handle_webhook():
-    payload = request.json
-    job_id = payload["job_id"]
-
-    # IMPORTANT: Always fetch canonical result from API (webhooks are not authenticated)
-    result = requests.get(
-        f"https://api.deepread.tech/v1/jobs/{job_id}",
-        headers={"X-API-Key": API_KEY}
-    ).json()
-
-    # Process result...
-    return "", 200  # Return 2xx to confirm delivery
 ```
 
 ---

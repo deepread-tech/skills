@@ -13,18 +13,50 @@ Install these skills and your AI coding assistant instantly knows how to integra
 
 ## Install
 
+### Claude Code
+
 ```bash
 npx skills add deepread-tech/skills
 ```
 
-## Usage
-
-After installing, use the slash commands in Claude Code:
+After installing, use the slash commands:
 
 ```
 /setup    # walks you through signup, API key, and first request
 /api      # full API reference — your agent can write integration code in any language
 ```
+
+### Cursor
+
+Copy the rule files into your project:
+
+```bash
+git clone https://github.com/deepread-tech/skills.git /tmp/deepread-skills
+cp -r /tmp/deepread-skills/.cursor .
+```
+
+Or manually copy `.cursor/rules/deepread-setup.mdc` and `.cursor/rules/deepread-api.mdc` into your project's `.cursor/rules/` directory.
+
+Rules use `alwaysApply: false` — Cursor will invoke them automatically when you're working with the DeepRead API.
+
+### Windsurf
+
+Copy the rule files into your project:
+
+```bash
+git clone https://github.com/deepread-tech/skills.git /tmp/deepread-skills
+cp -r /tmp/deepread-skills/.windsurf .
+```
+
+Or manually copy `.windsurf/rules/deepread-setup.md` and `.windsurf/rules/deepread-api.md` into your project's `.windsurf/rules/` directory.
+
+### Clawhub (OpenClaw Registry)
+
+```bash
+clawhub add deepread-tech/deepread-ocr
+```
+
+The skills are published to the OpenClaw registry as `user-invocable` commands. Use `/setup` and `/api` after installation.
 
 ## What is DeepRead
 
