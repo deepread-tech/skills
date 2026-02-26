@@ -16,7 +16,8 @@
       "strict": false,
       "skills": [
         "./skills/setup",
-        "./skills/api"
+        "./skills/api",
+        "./skills/form-fill"
       ]
     }
   ]
