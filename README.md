@@ -10,6 +10,7 @@ Install these skills and your AI coding assistant instantly knows how to integra
 |-------|-------------|
 | `/setup` | Get started — signup, API key, first request, structured extraction, blueprints |
 | `/api` | Full API reference — all endpoints, auth, schemas, blueprints, webhooks, code examples |
+| `/form-fill` | Fill PDF forms — submit form + JSON data, get back completed PDF with quality report |
 
 ## Install
 
@@ -22,8 +23,9 @@ npx skills add deepread-tech/skills
 After installing, use the slash commands:
 
 ```
-/setup    # walks you through signup, API key, and first request
-/api      # full API reference — your agent can write integration code in any language
+/setup      # walks you through signup, API key, and first request
+/api        # full API reference — your agent can write integration code in any language
+/form-fill  # fill PDF forms with AI — any PDF, no AcroForm needed
 ```
 
 ### Cursor
@@ -35,7 +37,7 @@ git clone https://github.com/deepread-tech/skills.git /tmp/deepread-skills
 cp -r /tmp/deepread-skills/.cursor .
 ```
 
-Or manually copy `.cursor/rules/deepread-setup.mdc` and `.cursor/rules/deepread-api.mdc` into your project's `.cursor/rules/` directory.
+Or manually copy `.cursor/rules/deepread-setup.mdc`, `.cursor/rules/deepread-api.mdc`, and `.cursor/rules/deepread-form-fill.mdc` into your project's `.cursor/rules/` directory.
 
 Rules use `alwaysApply: false` — Cursor will invoke them automatically when you're working with the DeepRead API.
 
@@ -48,7 +50,7 @@ git clone https://github.com/deepread-tech/skills.git /tmp/deepread-skills
 cp -r /tmp/deepread-skills/.windsurf .
 ```
 
-Or manually copy `.windsurf/rules/deepread-setup.md` and `.windsurf/rules/deepread-api.md` into your project's `.windsurf/rules/` directory.
+Or manually copy `.windsurf/rules/deepread-setup.md`, `.windsurf/rules/deepread-api.md`, and `.windsurf/rules/deepread-form-fill.md` into your project's `.windsurf/rules/` directory.
 
 ### Clawhub (OpenClaw Registry)
 
@@ -56,7 +58,7 @@ Or manually copy `.windsurf/rules/deepread-setup.md` and `.windsurf/rules/deepre
 clawhub add deepread-tech/deepread-ocr
 ```
 
-The skills are published to the OpenClaw registry as `user-invocable` commands. Use `/setup` and `/api` after installation.
+The skills are published to the OpenClaw registry as `user-invocable` commands. Use `/setup`, `/api`, and `/form-fill` after installation.
 
 ## What is DeepRead
 
