@@ -24,7 +24,7 @@ DeepRead returns:
 - A redacted document with all PII removed
 - A detection report showing what was found, where, and confidence scores
 
-**14 PII types detected automatically:** SSN, credit cards, emails, phone numbers, names, addresses, dates of birth, passport numbers, driver's license numbers, bank accounts, IP addresses, medical record numbers, tax IDs, and biometric identifiers.
+**14 PII types detected automatically:** SSN, credit cards, emails, phone numbers, names, addresses, dates of birth, passport numbers, driver's license numbers, bank accounts, IP addresses, IBANs, URLs, and medical record numbers.
 
 ---
 
@@ -167,13 +167,13 @@ Each PII type in `pii_detected` includes:
 | `NAME` | Personal names |
 | `ADDRESS` | Physical/mailing addresses |
 | `DATE_OF_BIRTH` | Dates of birth |
-| `PASSPORT` | Passport numbers |
+| `PASSPORT_NUMBER` | Passport numbers |
 | `DRIVER_LICENSE` | Driver's license numbers |
 | `BANK_ACCOUNT` | Bank account/routing numbers |
+| `IBAN` | International Bank Account Numbers |
 | `IP_ADDRESS` | IP addresses |
+| `URL` | URLs |
 | `MEDICAL_RECORD` | Medical record numbers (MRN) |
-| `TAX_ID` | Tax identification numbers (EIN, ITIN) |
-| `BIOMETRIC` | Biometric identifiers |
 
 ---
 

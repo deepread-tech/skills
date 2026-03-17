@@ -6,7 +6,7 @@
 
 Upload a document (PDF, text, image). AI detects 14 types of PII automatically, redacts them, returns a clean document with detection report. Works with any supported format — no configuration needed.
 
-**PII types:** SSN, credit cards, emails, phone numbers, names, addresses, dates of birth, passport numbers, driver's licenses, bank accounts, IP addresses, medical record numbers, tax IDs, biometric identifiers.
+**PII types:** SSN, credit cards, emails, phone numbers, names, addresses, dates of birth, passport numbers, driver's licenses, bank accounts, IBANs, IP addresses, URLs, medical record numbers.
 
 **Redaction styles:** `black_bar` (default, black rectangles), `placeholder` (type labels like `[NAME]`), `partial` (reveal last digits like `***-**-6789`)
 

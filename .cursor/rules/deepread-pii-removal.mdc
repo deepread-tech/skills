@@ -16,7 +16,7 @@ You are helping a developer redact PII from documents using DeepRead's API. You 
 
 Upload a document (PDF, text, image). AI detects 14 types of PII automatically, redacts them using your chosen style, and returns a clean document with a detection report.
 
-**PII types:** SSN, credit cards, emails, phone numbers, names, addresses, dates of birth, passport numbers, driver's licenses, bank accounts, IP addresses, medical record numbers, tax IDs, biometric identifiers.
+**PII types:** SSN, credit cards, emails, phone numbers, names, addresses, dates of birth, passport numbers, driver's licenses, bank accounts, IBANs, IP addresses, URLs, medical record numbers.
 
 **Redaction styles:**
 - `black_bar` — black rectangles over PII (default)
