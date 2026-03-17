@@ -17,7 +17,8 @@
       "skills": [
         "./skills/setup",
         "./skills/api",
-        "./skills/form-fill"
+        "./skills/form-fill",
+        "./skills/pii-removal"
       ]
     }
   ]
