@@ -5,20 +5,26 @@
     "email": "hello@deepread.tech"
   },
   "metadata": {
-    "description": "Teach any AI agent how to use the DeepRead OCR API",
-    "version": "2.0.0"
+    "description": "AI-native OCR, form filling, PII redaction, and BYOK for document processing. 97%+ accuracy with multi-model consensus.",
+    "version": "3.0.0"
   },
   "plugins": [
     {
       "name": "deepread",
-      "description": "Get started with DeepRead and integrate the OCR API into your project",
+      "description": "DeepRead OCR — extract text and structured data from PDFs and images with 97%+ accuracy. Includes setup, API reference, PII redaction, form filling, and BYOK.",
+      "version": "3.0.0",
       "source": "./",
+      "homepage": "https://www.deepread.tech",
+      "repository": "https://github.com/deepread-tech/skills",
+      "license": "MIT-0",
+      "keywords": ["ocr", "pdf", "document-processing", "pii", "form-fill", "byok", "ai"],
+      "category": "data-processing",
       "strict": false,
       "skills": [
         "./skills/setup",
         "./skills/api",
-        "./skills/form-fill",
-        "./skills/pii-removal"
+        "./skills/pii",
+        "./skills/byok"
       ]
     }
   ]
