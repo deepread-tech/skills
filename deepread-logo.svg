@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="384" height="384" viewBox="0 0 320 320" fill="none" aria-label="DeepRead logo icon">
+  <style>
+    :root { 
+      --deepread-accent: #10B981; 
+      --deepread-stroke: #374151;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { 
+        --deepread-stroke: #E5E7EB;
+      }
+    }
+    .dark {
+      --deepread-stroke: #E5E7EB;
+    }
+  </style>
+  <rect x="40" y="30" width="220" height="260" rx="28" ry="28" stroke="var(--deepread-stroke)" stroke-width="16" fill="none"/>
+  <path d="M180 30v52c0 10 8 18 18 18h62" stroke="var(--deepread-stroke)" stroke-width="16" fill="none"/>
+  <line x1="70" y1="130" x2="200" y2="130" stroke="var(--deepread-stroke)" stroke-width="16" stroke-linecap="round"/>
+  <line x1="70" y1="165" x2="200" y2="165" stroke="var(--deepread-stroke)" stroke-width="16" stroke-linecap="round"/>
+  <line x1="70" y1="200" x2="170" y2="200" stroke="var(--deepread-stroke)" stroke-width="16" stroke-linecap="round"/>
+  <!-- green download arrow in bottom right corner -->
+  <path d="M210 202v58" stroke="var(--deepread-accent)" stroke-width="18" stroke-linecap="round"/>
+  <path d="M195 245l15 15 15-15" fill="none" stroke="var(--deepread-accent)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
