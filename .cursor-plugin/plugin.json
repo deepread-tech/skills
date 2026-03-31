@@ -1,0 +1,13 @@
+{
+  "name": "deepread",
+  "description": "AI-native OCR, form filling, PII redaction, and BYOK for document processing. 97%+ accuracy with multi-model consensus and human-in-the-loop flagging. Free 2,000 pages/month.",
+  "version": "3.0.0",
+  "author": {
+    "name": "DeepRead Technologies",
+    "email": "hello@deepread.tech"
+  },
+  "homepage": "https://www.deepread.tech",
+  "repository": "https://github.com/deepread-tech/skills",
+  "license": "MIT-0",
+  "keywords": ["ocr", "pdf", "document-processing", "pii", "form-fill", "byok", "ai"]
+}
