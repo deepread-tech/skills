@@ -1,0 +1,11 @@
+{
+  "name": "deepread",
+  "description": "DeepRead OCR — extract text and structured data from PDFs and images with 97%+ accuracy. Includes setup, API reference, PII redaction, form filling, and BYOK.",
+  "version": "3.0.0",
+  "author": {
+    "name": "DeepRead Technologies",
+    "email": "hello@deepread.tech"
+  },
+  "homepage": "https://www.deepread.tech",
+  "repository": "https://github.com/deepread-tech/skills"
+}
