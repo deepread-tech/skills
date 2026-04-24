@@ -228,6 +228,51 @@ Returns document preview data. Anyone with the token can view — no API key nee
 
 ---
 
+### Schema: Arrays of Objects
+
+Array-valued fields (`"type": "array"`) can carry any `items.properties` you define — not just `{description, amount}`. Each property in `items.properties` is extracted as its own typed field per row, with your `datapoint_prompt` / `description` passed to the model.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "documents": {
+      "type": "array",
+      "description": "Every invoice entry on the summary bill.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "vendor_name":     {"type": "string"},
+          "account_number":  {"type": ["string", "null"]},
+          "invoice_date":    {"type": "string", "format": "date"},
+          "invoice_total":   {"type": "number"},
+          "line_items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": {"type": "string"},
+                "amount":      {"type": "number"}
+              }
+            }
+          }
+        },
+        "required": ["vendor_name", "invoice_total"]
+      }
+    }
+  }
+}
+```
+
+Notes:
+
+- Nullable types use `"type": ["string", "null"]` (standard JSON Schema).
+- Required properties inside `items` are enforced; optional ones default to `null`.
+- Deep nesting (array → object → array → object) is supported up to 6 levels.
+- The legacy two-field `{description, amount}` shape still works unchanged — existing integrations are unaffected.
+
+---
+
 ## Blueprints & Optimizer
 
 Blueprints are optimized, versioned schemas. The optimizer takes your sample documents + expected values and enhances field descriptions for 20-30% accuracy improvement.

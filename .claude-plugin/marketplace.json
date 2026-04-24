@@ -19,7 +19,7 @@
       "license": "MIT-0",
       "keywords": ["ocr", "pdf", "document-processing", "pii", "form-fill", "byok", "ai"],
       "category": "data-processing",
-      "strict": false,
+      "strict": true,
       "skills": [
         "./skills/setup",
         "./skills/api",
