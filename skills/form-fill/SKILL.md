@@ -1,6 +1,6 @@
 ---
-name: form-fill
-description: AI-powered PDF form filling API. Upload any PDF form + your data as JSON — AI detects fields, maps data, fills the form with quality checks, returns a completed PDF. Works with scanned forms, no AcroForm required.
+name: deepread-form-fill
+description: AI-powered PDF form filling via DeepRead. Upload any PDF form + your data as JSON — AI detects fields, maps data semantically, fills the form with quality checks, returns a completed PDF. Works with scanned, non-editable forms — no AcroForm required.
 allowed-tools: Bash, Read, Write
 user-invocable: true
 ---

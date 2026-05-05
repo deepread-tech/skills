@@ -1,6 +1,6 @@
 ---
-name: setup
-description: Get started with DeepRead. Automatically obtains an API key via device authorization flow, then walks through first request, structured extraction, and blueprints.
+name: deepread-setup
+description: Get started with DeepRead. Automatically obtains an API key via OAuth device authorization flow, then walks through OCR, structured extraction, form filling, PII redaction, and blueprint optimization.
 allowed-tools: Bash, Read, Write
 user-invocable: true
 ---

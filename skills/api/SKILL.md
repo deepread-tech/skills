@@ -1,6 +1,6 @@
 ---
-name: api
-description: Full DeepRead API reference. All endpoints, auth, request/response formats, blueprints, webhooks, error handling, and code examples.
+name: deepread-api
+description: Full DeepRead API reference. All endpoints, auth, request/response formats, blueprints, webhooks, error handling, and code examples for OCR, structured extraction, form filling, and PII redaction.
 allowed-tools: Bash, Read, Write
 user-invocable: true
 ---
