@@ -16,7 +16,7 @@ With BYOK:     You → DeepRead API → YOUR key pays provider   → DeepRead co
 
 **Page quota is skipped entirely for BYOK users.** Process unlimited pages on any plan.
 
-> This skill helps agents guide users through BYOK setup on DeepRead. The agent opens the dashboard for key management and uses `https://api.deepread.tech` for document processing. No system files are modified.
+> **What this skill does and what it touches:** This skill helps agents guide users through BYOK setup. The agent opens the DeepRead dashboard (`https://www.deepread.tech/dashboard/byok`) in the user's browser so the user can paste their provider key directly into DeepRead's UI. It does not collect, store, or transmit provider keys itself. The `DEEPREAD_API_KEY` is read from the user's environment — this skill does not modify any system files, shell profiles, or `.env` files.
 
 ## What Changes With BYOK
 
@@ -36,34 +36,19 @@ With BYOK:     You → DeepRead API → YOUR key pays provider   → DeepRead co
 
 ### Step 1: Get Your DeepRead API Key
 
-If you don't have one yet, use the device flow:
+You need a DeepRead account first. Sign up at https://www.deepread.tech/dashboard/?utm_source=clawhub (free, no credit card, 2,000 pages/month).
+
+For automated agent setup with OAuth device flow, install the dedicated skill:
 
 ```bash
-DR_RESPONSE=$(curl -s -X POST https://api.deepread.tech/v1/agent/device/code \
-  -H "Content-Type: application/json" \
-  -d '{"agent_name":"Claude Code"}')
-
-DR_DEVICE_CODE=$(echo "$DR_RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['device_code'])")
-DR_VERIFY_URL=$(echo "$DR_RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['verification_uri_complete'])")
-
-echo "Open this URL to approve: $DR_VERIFY_URL"
-open "$DR_VERIFY_URL" 2>/dev/null
-
-while true; do
-  sleep 5
-  DR_TOKEN_RESP=$(curl -s -X POST https://api.deepread.tech/v1/agent/device/token \
-    -H "Content-Type: application/json" \
-    -d "{\"device_code\":\"$DR_DEVICE_CODE\"}")
-  DR_API_KEY=$(echo "$DR_TOKEN_RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('api_key',''))" 2>/dev/null)
-  if [ -n "$DR_API_KEY" ] && [ "$DR_API_KEY" != "" ]; then
-    echo "Got API key: ${DR_API_KEY:0:12}..."
-    printf "\nDEEPREAD_API_KEY=%s\n" "$DR_API_KEY" >> .env
-    break
-  fi
-done
+clawhub install uday390/deepread-agent-setup
 ```
 
-Or sign up directly: https://www.deepread.tech/dashboard/?utm_source=clawhub
+That skill handles authentication securely. Once you have your DeepRead API key, set it as an environment variable in your shell or a secrets manager:
+
+```bash
+export DEEPREAD_API_KEY="sk_live_your_key_here"
+```
 
 ### Step 2: Add Your Provider Key in the Dashboard
 
@@ -196,6 +181,16 @@ do {
 - **Separate encryption key** — encryption key stored separately from the database
 - **Soft-delete** — removing a key clears the ciphertext from the database
 - **One key at a time** — simple billing, all processing routes through one provider
+
+## Key Storage Best Practices
+
+- **Use scoped or test keys** for development — most providers (OpenAI, Google) allow restricted-scope or short-lived keys
+- **Use a secrets manager** for production (1Password CLI, OS keychain, AWS Secrets Manager, HashiCorp Vault) over plaintext storage
+- **Rotate keys regularly** and revoke unused ones at https://www.deepread.tech/dashboard
+- **Never commit** API keys to version control or share them in chat, screenshots, or logs
+- **Verify the provider** — review DeepRead's privacy policy at https://www.deepread.tech before submitting your provider keys
+
+DeepRead validates provider keys against the provider's API before encrypting and storing them. Keys are encrypted at rest and never logged.
 
 ## When to Use BYOK
 
