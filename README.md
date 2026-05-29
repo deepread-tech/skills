@@ -71,7 +71,7 @@ AI-native document processing API. Upload a PDF or image, get back extracted tex
 - **Form Fill** — AI-powered PDF form filling with visual QA
 - **PII Removal** — Detect and redact 14 types of personal information
 - Blueprints — optimized reusable schemas with 20-30% accuracy improvement
-- Per-field confidence flags (`hil_flag`) for human-in-the-loop review
+- Per-field confidence flags (`needs_review`) for human-in-the-loop review
 - Webhook notifications
 - Shareable preview links (no auth needed)
 

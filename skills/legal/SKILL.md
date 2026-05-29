@@ -13,34 +13,40 @@ Extract structured data from contracts, legal agreements, NDAs, court filings, l
 
 ## What You Get Back
 
-Submit a contract and get structured JSON:
+Submit a contract and get structured JSON. Extracted fields come back as a list under `extraction.fields[]` (each field has `key`, `value`, `needs_review`, and `location.page`):
 
 ```json
 {
-  "document_type": {"value": "Master Services Agreement", "hil_flag": false, "found_on_page": 1},
-  "parties": {"value": [
-    {"name": "Acme Corp", "role": "Service Provider", "address": "123 Tech Blvd, San Francisco, CA"},
-    {"name": "GlobalCo Inc", "role": "Client", "address": "456 Market St, New York, NY"}
-  ], "hil_flag": false, "found_on_page": 1},
-  "effective_date": {"value": "2026-01-15", "hil_flag": false, "found_on_page": 1},
-  "termination_date": {"value": "2027-01-14", "hil_flag": false, "found_on_page": 1},
-  "governing_law": {"value": "State of California", "hil_flag": false, "found_on_page": 8},
-  "contract_value": {"value": 250000.00, "hil_flag": true, "reason": "Multiple amounts found on different pages"},
-  "payment_terms": {"value": "Net 45 from invoice date", "hil_flag": false, "found_on_page": 3},
-  "key_clauses": {"value": [
-    {"type": "Indemnification", "summary": "Provider indemnifies Client against third-party IP claims", "page": 5},
-    {"type": "Limitation of Liability", "summary": "Capped at 12 months of fees paid", "page": 5},
-    {"type": "Termination", "summary": "Either party may terminate with 30 days written notice", "page": 6},
-    {"type": "Non-Compete", "summary": "12-month non-compete within same industry vertical", "page": 7}
-  ], "hil_flag": false, "found_on_page": 5},
-  "signatures": {"value": [
-    {"name": "John Smith", "title": "CEO, Acme Corp", "date": "2026-01-10"},
-    {"name": "Jane Doe", "title": "General Counsel, GlobalCo Inc", "date": "2026-01-12"}
-  ], "hil_flag": false, "found_on_page": 8}
+  "schema_version": "dp02",
+  "status": "completed",
+  "extraction": {
+    "fields": [
+      {"key": "document_type", "value": "Master Services Agreement", "needs_review": false, "location": {"page": 1}},
+      {"key": "parties", "value": [
+        {"name": "Acme Corp", "role": "Service Provider", "address": "123 Tech Blvd, San Francisco, CA"},
+        {"name": "GlobalCo Inc", "role": "Client", "address": "456 Market St, New York, NY"}
+      ], "needs_review": false, "location": {"page": 1}},
+      {"key": "effective_date", "value": "2026-01-15", "needs_review": false, "location": {"page": 1}},
+      {"key": "termination_date", "value": "2027-01-14", "needs_review": false, "location": {"page": 1}},
+      {"key": "governing_law", "value": "State of California", "needs_review": false, "location": {"page": 8}},
+      {"key": "contract_value", "value": 250000.00, "needs_review": true, "review_reason": "Multiple amounts found on different pages", "location": {"page": 1}},
+      {"key": "payment_terms", "value": "Net 45 from invoice date", "needs_review": false, "location": {"page": 3}},
+      {"key": "key_clauses", "value": [
+        {"type": "Indemnification", "summary": "Provider indemnifies Client against third-party IP claims", "page": 5},
+        {"type": "Limitation of Liability", "summary": "Capped at 12 months of fees paid", "page": 5},
+        {"type": "Termination", "summary": "Either party may terminate with 30 days written notice", "page": 6},
+        {"type": "Non-Compete", "summary": "12-month non-compete within same industry vertical", "page": 7}
+      ], "needs_review": false, "location": {"page": 5}},
+      {"key": "signatures", "value": [
+        {"name": "John Smith", "title": "CEO, Acme Corp", "date": "2026-01-10"},
+        {"name": "Jane Doe", "title": "General Counsel, GlobalCo Inc", "date": "2026-01-12"}
+      ], "needs_review": false, "location": {"page": 8}}
+    ]
+  }
 }
 ```
 
-Fields with `hil_flag: true` need human review. Everything else is high-confidence.
+Fields with `needs_review: true` need human review (check `review_reason`). Everything else is high-confidence.
 
 ## Setup
 
@@ -180,13 +186,13 @@ while True:
     result = requests.get(f"{BASE}/v1/jobs/{job_id}", headers=headers).json()
 
     if result["status"] == "completed":
-        data = result["result"]["data"]
-        print(json.dumps(data, indent=2))
+        fields = result.get("extraction", {}).get("fields", [])
+        print(json.dumps(fields, indent=2))
 
         # Flag fields needing review
-        for field, value in data.items():
-            if isinstance(value, dict) and value.get("hil_flag"):
-                print(f"\n  REVIEW: {field} — {value.get('reason')}")
+        for f in fields:
+            if f.get("needs_review"):
+                print(f"\n  REVIEW: {f['key']} — {f.get('review_reason')}")
         break
     elif result["status"] == "failed":
         print(f"Failed: {result.get('error')}")

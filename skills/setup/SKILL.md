@@ -150,11 +150,12 @@ for dr_i in $(seq 1 40); do
 import json
 with open('/tmp/deepread_result.json') as f:
     data = json.load(f)
+doc = data.get('document', {})
 print(json.dumps({
     'status': data.get('status'),
-    'preview_url': data.get('preview_url'),
-    'page_count': len(data.get('result', {}).get('pages', [])) if data.get('result') else 0,
-    'text_preview': (data.get('result', {}).get('text', '') or '')[:500],
+    'preview_url': data.get('artifacts', {}).get('preview_url'),
+    'page_count': doc.get('page_count', 0),
+    'text_preview': (doc.get('content', {}).get('text', '') or '')[:500],
 }, indent=2))
 "
     break
@@ -175,10 +176,11 @@ with open('/tmp/deepread_result.json') as f:
     data = json.load(f)
 print('Status:', data.get('status'))
 if data.get('status') == 'completed':
+    doc = data.get('document', {})
     print(json.dumps({
-        'preview_url': data.get('preview_url'),
-        'page_count': len(data.get('result', {}).get('pages', [])) if data.get('result') else 0,
-        'text_preview': (data.get('result', {}).get('text', '') or '')[:500],
+        'preview_url': data.get('artifacts', {}).get('preview_url'),
+        'page_count': doc.get('page_count', 0),
+        'text_preview': (doc.get('content', {}).get('text', '') or '')[:500],
     }, indent=2))
 elif data.get('status') == 'failed':
     print('Error:', data.get('error'))
@@ -228,33 +230,43 @@ print('Status:', data.get('status'))
 if data.get('status') == 'completed':
     print()
     print('=== STRUCTURED DATA ===')
-    fields = data.get('result', {}).get('data', {})
+    fields = data.get('extraction', {}).get('fields', [])
     if fields:
         print(json.dumps(fields, indent=2))
     else:
         print('No structured data returned')
     print()
-    meta = data.get('metadata', {})
-    print('=== METADATA ===')
-    print(json.dumps({k: meta[k] for k in ['page_count','pipeline','review_percentage','fields_requiring_review','total_fields'] if k in meta}, indent=2))
+    review = data.get('review', {})
+    print('=== REVIEW SUMMARY ===')
+    print(json.dumps({
+        'pipeline': data.get('pipeline'),
+        'page_count': data.get('document', {}).get('page_count'),
+        'fields_total': review.get('fields_total'),
+        'fields_needing_review': review.get('fields_needing_review'),
+        'review_rate': review.get('review_rate'),
+    }, indent=2))
     print()
-    print('Preview:', data.get('preview_url', 'N/A'))
+    print('Preview:', data.get('artifacts', {}).get('preview_url', 'N/A'))
 elif data.get('status') == 'failed':
     print('Error:', data.get('error'))
 "
 ```
 
-Each extracted field comes with quality metadata:
+Extracted fields come back as a list under `extraction.fields[]`, each with quality metadata:
 
 ```json
 {
-  "vendor": {"value": "Acme Inc", "hil_flag": false, "found_on_page": 1},
-  "due_date": {"value": "2025-03-15", "hil_flag": true, "reason": "Multiple dates found", "found_on_page": 1}
+  "extraction": {
+    "fields": [
+      {"key": "vendor", "value": "Acme Inc", "needs_review": false, "location": {"page": 1}},
+      {"key": "due_date", "value": "2025-03-15", "needs_review": true, "review_reason": "Multiple dates found", "location": {"page": 1}}
+    ]
+  }
 }
 ```
 
-- `hil_flag: false` — extracted confidently, safe to auto-accept
-- `hil_flag: true` — needs human review, check `reason` for why
+- `needs_review: false` — extracted confidently, safe to auto-accept
+- `needs_review: true` — needs human review, check `review_reason` for why
 
 ---
 

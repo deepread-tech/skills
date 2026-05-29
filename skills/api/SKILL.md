@@ -138,50 +138,77 @@ Poll until `status` is `completed` or `failed`. Recommended: wait 5s, then poll 
 **Auth:** `X-API-Key: YOUR_KEY`
 
 **Response (completed):**
+
+Every response carries `"schema_version": "dp02"`.
+
 ```json
 {
   "id": "550e8400-...",
   "status": "completed",
+  "schema_version": "dp02",
+  "pipeline": "standard",
   "created_at": "2025-01-18T10:30:00Z",
   "completed_at": "2025-01-18T10:32:15Z",
-  "result": {
-    "text": "Full extracted text in markdown",
-    "text_preview": "First 500 characters...",
-    "text_url": "https://...",
-    "data": {
-      "vendor": {"value": "Acme Inc", "hil_flag": false, "found_on_page": 1},
-      "total": {"value": 1250.00, "hil_flag": true, "reason": "Outside typical range", "found_on_page": 1}
+  "document": {
+    "page_count": 3,
+    "content": {
+      "format": "markdown",
+      "text": "Full extracted text in markdown",
+      "text_preview": "First 500 characters...",
+      "text_url": "https://..."
     },
-    "pages": [
-      {
-        "page_number": 1,
-        "text": "Page 1 text...",
-        "hil_flag": false,
-        "review_reason": null,
-        "data": {}
-      }
+    "layout": {
+      "version": "dp.lite.v1",
+      "page": {"index": 1},
+      "layout": {"blocks": [{"id": "b1", "type": "heading", "content": "INVOICE"}]}
+    }
+  },
+  "extraction": {
+    "fields": [
+      {"key": "vendor", "value": "Acme Inc", "needs_review": false, "location": {"page": 1}},
+      {"key": "total", "value": 1250.00, "needs_review": true, "review_reason": "Outside typical range", "location": {"page": 1}}
     ]
   },
-  "metadata": {
-    "page_count": 3,
-    "pipeline": "standard",
-    "review_percentage": 5.0,
-    "fields_requiring_review": 1,
-    "total_fields": 20,
-    "step_timings": {}
+  "pages": [
+    {
+      "page_number": 1,
+      "content": {"format": "markdown", "text": "Page 1 text..."},
+      "fields": [],
+      "needs_review": false
+    }
+  ],
+  "review": {
+    "needs_review": true,
+    "quality_score": 0.96,
+    "fields_total": 20,
+    "fields_needing_review": 1,
+    "review_rate": 0.05,
+    "flags": [
+      {"scope": "document", "severity": "high", "reason": "total outside typical range"}
+    ]
   },
-  "preview_url": "https://preview.deepread.tech/token123...",
-  "webhook_url": "https://yourapp.com/webhook",
-  "webhook_delivered": true
+  "artifacts": {
+    "preview_url": "https://preview.deepread.tech/token123..."
+  },
+  "webhook": {
+    "url": "https://yourapp.com/webhook",
+    "delivered": true
+  },
+  "meta": {
+    "engine_version": "1.1.0",
+    "cost_breakdown": {}
+  }
 }
 ```
 
 **Notes:**
-- `text_url` is provided when full text exceeds 1MB — fetch from this URL instead
-- `text_preview` is always the first 500 characters
-- `data` is only present if `schema` or `blueprint_id` was provided
-- `pages` is present when `include_pages=true` or `include_images=true`
-- `preview_url` is a shareable link (no auth needed) to the HIL review interface
+- `document.content.text_url` is provided when full text exceeds 1MB — fetch from this URL instead
+- `document.content.text_preview` is always the first 500 characters
+- `extraction.fields` is only present if `schema` or `blueprint_id` was provided — a **list** of `{key, value, needs_review, review_reason?, location.page}`
+- `pages` is present when `include_pages=true` or `include_images=true`; per-page auto-detected fields are in `pages[].fields[]`
+- `document.layout` is a typed object (was the old `result.json_string` blob)
+- `artifacts.preview_url` is a shareable link (no auth needed) to the HIL review interface
+- Bounding boxes (with `include_markers=true`) are returned under top-level `grounding[]`
 
 **Response (failed):**
 ```json
@@ -361,15 +388,19 @@ curl -X POST https://api.deepread.tech/v1/process \
 
 Pass `webhook_url` when submitting a document to get notified on completion.
 
-**Payload sent to your URL:**
+**Payload sent to your URL:** identical to the `GET /v1/jobs/{job_id}` response above (same dp02 shape). The job identifier is `id` (not `job_id`), and it carries `"schema_version": "dp02"`.
+
 ```json
 {
-  "event": "job.completed",
-  "job_id": "550e8400-...",
+  "id": "550e8400-...",
   "status": "completed",
-  "result": {"text": "...", "data": {}},
-  "metadata": {},
-  "preview_url": "https://preview.deepread.tech/..."
+  "schema_version": "dp02",
+  "pipeline": "standard",
+  "document": {"page_count": 3, "content": {"format": "markdown", "text": "..."}},
+  "extraction": {"fields": [{"key": "vendor", "value": "Acme Inc", "needs_review": false, "location": {"page": 1}}]},
+  "review": {"needs_review": false, "fields_total": 20, "fields_needing_review": 0, "review_rate": 0.0, "flags": []},
+  "artifacts": {"preview_url": "https://preview.deepread.tech/..."},
+  "webhook": {"url": "https://yourapp.com/webhook", "delivered": true}
 }
 ```
 
@@ -484,13 +515,13 @@ while True:
 
 # Use results
 if result["status"] == "completed":
-    text = result["result"]["text"]
-    data = result["result"].get("data", {})
-    for field, info in data.items():
-        if info["hil_flag"]:
-            print(f"REVIEW: {field} = {info['value']} ({info.get('reason')})")
+    text = result["document"]["content"]["text"]
+    fields = result.get("extraction", {}).get("fields", [])
+    for f in fields:
+        if f["needs_review"]:
+            print(f"REVIEW: {f['key']} = {f['value']} ({f.get('review_reason')})")
         else:
-            print(f"OK: {field} = {info['value']}")
+            print(f"OK: {f['key']} = {f['value']}")
 ```
 
 ### JavaScript / Node.js
@@ -705,7 +736,7 @@ API_KEY = "sk_live_YOUR_KEY"
 @app.route("/webhook", methods=["POST"])
 def handle_webhook():
     payload = request.json
-    job_id = payload["job_id"]
+    job_id = payload["id"]  # dp02: webhook uses `id` (was `job_id`)
 
     # IMPORTANT: Always fetch canonical result from API (webhooks are not authenticated)
     result = requests.get(
@@ -727,6 +758,6 @@ def handle_webhook():
 - **Better accuracy** → explain blueprints, help set up optimizer
 - **Real-time updates** → set up webhook_url, build receiver endpoint
 - **Hitting errors** → check API key, plan limits, file format, schema validity
-- **Share results** → use preview_url from response (no auth needed)
-- **Large documents** → use text_url instead of text field for docs > 1MB
-- **Review workflow** → filter fields by hil_flag, route flagged ones to human review
+- **Share results** → use `artifacts.preview_url` from response (no auth needed)
+- **Large documents** → use `document.content.text_url` instead of `document.content.text` for docs > 1MB
+- **Review workflow** → filter `extraction.fields[]` by `needs_review`, route flagged ones to human review

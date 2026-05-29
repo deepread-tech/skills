@@ -13,27 +13,33 @@ Extract structured data from invoices, receipts, purchase orders, and bills. Sub
 
 ## What You Get Back
 
-Submit an invoice PDF and get structured JSON like this:
+Submit an invoice PDF and get structured JSON. Extracted fields come back as a list under `extraction.fields[]` (each field has `key`, `value`, `needs_review`, and `location.page`):
 
 ```json
 {
-  "vendor": {"value": "Acme Corp", "hil_flag": false, "found_on_page": 1},
-  "invoice_number": {"value": "INV-2026-0042", "hil_flag": false, "found_on_page": 1},
-  "invoice_date": {"value": "2026-03-15", "hil_flag": false, "found_on_page": 1},
-  "due_date": {"value": "2026-04-15", "hil_flag": false, "found_on_page": 1},
-  "subtotal": {"value": 1150.00, "hil_flag": false, "found_on_page": 1},
-  "tax": {"value": 100.00, "hil_flag": false, "found_on_page": 1},
-  "total": {"value": 1250.00, "hil_flag": false, "found_on_page": 1},
-  "currency": {"value": "USD", "hil_flag": false, "found_on_page": 1},
-  "payment_terms": {"value": "Net 30", "hil_flag": true, "reason": "Inferred from dates"},
-  "line_items": {"value": [
-    {"description": "Consulting services - March", "quantity": 40, "unit_price": 25.00, "amount": 1000.00},
-    {"description": "Software license", "quantity": 1, "unit_price": 150.00, "amount": 150.00}
-  ], "hil_flag": false, "found_on_page": 1}
+  "schema_version": "dp02",
+  "status": "completed",
+  "extraction": {
+    "fields": [
+      {"key": "vendor", "value": "Acme Corp", "needs_review": false, "location": {"page": 1}},
+      {"key": "invoice_number", "value": "INV-2026-0042", "needs_review": false, "location": {"page": 1}},
+      {"key": "invoice_date", "value": "2026-03-15", "needs_review": false, "location": {"page": 1}},
+      {"key": "due_date", "value": "2026-04-15", "needs_review": false, "location": {"page": 1}},
+      {"key": "subtotal", "value": 1150.00, "needs_review": false, "location": {"page": 1}},
+      {"key": "tax", "value": 100.00, "needs_review": false, "location": {"page": 1}},
+      {"key": "total", "value": 1250.00, "needs_review": false, "location": {"page": 1}},
+      {"key": "currency", "value": "USD", "needs_review": false, "location": {"page": 1}},
+      {"key": "payment_terms", "value": "Net 30", "needs_review": true, "review_reason": "Inferred from dates", "location": {"page": 1}},
+      {"key": "line_items", "value": [
+        {"description": "Consulting services - March", "quantity": 40, "unit_price": 25.00, "amount": 1000.00},
+        {"description": "Software license", "quantity": 1, "unit_price": 150.00, "amount": 150.00}
+      ], "needs_review": false, "location": {"page": 1}}
+    ]
+  }
 }
 ```
 
-Fields with `hil_flag: true` need human review. Everything else is high-confidence and can be auto-processed.
+Fields with `needs_review: true` need human review (check `review_reason`). Everything else is high-confidence and can be auto-processed.
 
 ## Setup
 
@@ -146,15 +152,14 @@ while True:
     result = requests.get(f"{BASE}/v1/jobs/{job_id}", headers=headers).json()
 
     if result["status"] == "completed":
-        data = result["result"]["data"]
+        fields = result.get("extraction", {}).get("fields", [])
 
         # Auto-process high-confidence fields
-        for field, value in data.items():
-            if isinstance(value, dict):
-                if value.get("hil_flag"):
-                    print(f"  REVIEW: {field} = {value['value']} ({value.get('reason')})")
-                else:
-                    print(f"  OK: {field} = {value['value']}")
+        for f in fields:
+            if f.get("needs_review"):
+                print(f"  REVIEW: {f['key']} = {f['value']} ({f.get('review_reason')})")
+            else:
+                print(f"  OK: {f['key']} = {f['value']}")
         break
     elif result["status"] == "failed":
         print(f"Failed: {result.get('error')}")
@@ -184,7 +189,7 @@ while true; do
   [ "$STATUS" = "completed" ] || [ "$STATUS" = "failed" ] && break
 done
 
-echo "$RESULT" | python3 -c "import sys,json; print(json.dumps(json.load(sys.stdin)['result']['data'], indent=2))"
+echo "$RESULT" | python3 -c "import sys,json; print(json.dumps(json.load(sys.stdin).get('extraction', {}).get('fields', []), indent=2))"
 ```
 
 ## Use Cases
@@ -200,7 +205,7 @@ echo "$RESULT" | python3 -c "import sys,json; print(json.dumps(json.load(sys.std
 - **Be specific in descriptions** — "Invoice number or reference ID" works better than just "number"
 - **Use YYYY-MM-DD for dates** — Reduces ambiguity between US and international date formats
 - **Use blueprints for recurring vendors** — If you process the same vendor's invoices repeatedly, create a blueprint at deepread.tech/dashboard/optimizer for 20-30% accuracy improvement
-- **Check hil_flag fields** — These are the only fields that need human review. Everything else is high-confidence.
+- **Check `needs_review` fields** — These are the only fields that need human review. Everything else is high-confidence.
 
 ## Batch Processing
 
@@ -243,9 +248,10 @@ with ThreadPoolExecutor(max_workers=5) as pool:
 
 for r in results:
     if r["status"] == "completed":
-        data = r["result"]["data"]
-        vendor = data.get("vendor", {}).get("value", "Unknown")
-        total = data.get("total", {}).get("value", 0)
+        # extraction.fields is a list — index it by key for easy lookup
+        by_key = {f["key"]: f["value"] for f in r.get("extraction", {}).get("fields", [])}
+        vendor = by_key.get("vendor", "Unknown")
+        total = by_key.get("total", 0)
         print(f"  {vendor}: ${total}")
 ```
 

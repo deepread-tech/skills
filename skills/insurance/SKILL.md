@@ -13,33 +13,39 @@ Extract structured data from insurance claims, policy documents, Explanations of
 
 ## What You Get Back
 
-Submit a claim form and get structured JSON:
+Submit a claim form and get structured JSON. Extracted fields come back as a list under `extraction.fields[]` (each field has `key`, `value`, `needs_review`, and `location.page`):
 
 ```json
 {
-  "claim_number": {"value": "CLM-2026-078432", "hil_flag": false, "found_on_page": 1},
-  "policy_number": {"value": "POL-HO3-445521", "hil_flag": false, "found_on_page": 1},
-  "claimant_name": {"value": "Robert Johnson", "hil_flag": false, "found_on_page": 1},
-  "date_of_loss": {"value": "2026-02-14", "hil_flag": false, "found_on_page": 1},
-  "date_reported": {"value": "2026-02-15", "hil_flag": false, "found_on_page": 1},
-  "loss_type": {"value": "Water Damage", "hil_flag": false, "found_on_page": 1},
-  "loss_description": {"value": "Burst pipe in basement caused flooding to finished living area, damaged drywall, carpet, and personal property", "hil_flag": false, "found_on_page": 2},
-  "property_address": {"value": "789 Elm Dr, Denver, CO 80202", "hil_flag": false, "found_on_page": 1},
-  "coverage_type": {"value": "Homeowners HO-3", "hil_flag": false, "found_on_page": 1},
-  "deductible": {"value": 1000.00, "hil_flag": false, "found_on_page": 1},
-  "estimated_damages": {"value": 24500.00, "hil_flag": true, "reason": "Multiple estimates on different pages"},
-  "adjuster": {"value": "Sarah Martinez, License #ADJ-44521", "hil_flag": false, "found_on_page": 3},
-  "line_items": {"value": [
-    {"category": "Structural", "description": "Drywall replacement — basement", "amount": 8500.00},
-    {"category": "Flooring", "description": "Carpet removal and replacement", "amount": 6200.00},
-    {"category": "Personal Property", "description": "Damaged furniture and electronics", "amount": 5800.00},
-    {"category": "Mitigation", "description": "Water extraction and drying", "amount": 4000.00}
-  ], "hil_flag": false, "found_on_page": 3},
-  "status": {"value": "Under Review", "hil_flag": false, "found_on_page": 1}
+  "schema_version": "dp02",
+  "status": "completed",
+  "extraction": {
+    "fields": [
+      {"key": "claim_number", "value": "CLM-2026-078432", "needs_review": false, "location": {"page": 1}},
+      {"key": "policy_number", "value": "POL-HO3-445521", "needs_review": false, "location": {"page": 1}},
+      {"key": "claimant_name", "value": "Robert Johnson", "needs_review": false, "location": {"page": 1}},
+      {"key": "date_of_loss", "value": "2026-02-14", "needs_review": false, "location": {"page": 1}},
+      {"key": "date_reported", "value": "2026-02-15", "needs_review": false, "location": {"page": 1}},
+      {"key": "loss_type", "value": "Water Damage", "needs_review": false, "location": {"page": 1}},
+      {"key": "loss_description", "value": "Burst pipe in basement caused flooding to finished living area, damaged drywall, carpet, and personal property", "needs_review": false, "location": {"page": 2}},
+      {"key": "property_address", "value": "789 Elm Dr, Denver, CO 80202", "needs_review": false, "location": {"page": 1}},
+      {"key": "coverage_type", "value": "Homeowners HO-3", "needs_review": false, "location": {"page": 1}},
+      {"key": "deductible", "value": 1000.00, "needs_review": false, "location": {"page": 1}},
+      {"key": "estimated_damages", "value": 24500.00, "needs_review": true, "review_reason": "Multiple estimates on different pages", "location": {"page": 1}},
+      {"key": "adjuster", "value": "Sarah Martinez, License #ADJ-44521", "needs_review": false, "location": {"page": 3}},
+      {"key": "line_items", "value": [
+        {"category": "Structural", "description": "Drywall replacement — basement", "amount": 8500.00},
+        {"category": "Flooring", "description": "Carpet removal and replacement", "amount": 6200.00},
+        {"category": "Personal Property", "description": "Damaged furniture and electronics", "amount": 5800.00},
+        {"category": "Mitigation", "description": "Water extraction and drying", "amount": 4000.00}
+      ], "needs_review": false, "location": {"page": 3}},
+      {"key": "status", "value": "Under Review", "needs_review": false, "location": {"page": 1}}
+    ]
+  }
 }
 ```
 
-Fields with `hil_flag: true` need human review. Everything else is high-confidence.
+Fields with `needs_review: true` need human review (check `review_reason`). Everything else is high-confidence.
 
 ## Setup
 
@@ -148,12 +154,12 @@ while True:
     result = requests.get(f"{BASE}/v1/jobs/{job_id}", headers=headers).json()
 
     if result["status"] == "completed":
-        data = result["result"]["data"]
-        print(json.dumps(data, indent=2))
+        fields = result.get("extraction", {}).get("fields", [])
+        print(json.dumps(fields, indent=2))
 
-        for field, value in data.items():
-            if isinstance(value, dict) and value.get("hil_flag"):
-                print(f"\n  REVIEW: {field} — {value.get('reason')}")
+        for f in fields:
+            if f.get("needs_review"):
+                print(f"\n  REVIEW: {f['key']} — {f.get('review_reason')}")
         break
     elif result["status"] == "failed":
         print(f"Failed: {result.get('error')}")
