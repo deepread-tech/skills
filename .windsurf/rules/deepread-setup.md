@@ -99,7 +99,8 @@ with open('/tmp/deepread_result.json') as f:
     data = json.load(f)
 print('Status:', data.get('status'))
 if data.get('status') == 'completed':
-    print(json.dumps({'preview_url': data.get('preview_url'), 'page_count': len(data.get('result',{}).get('pages',[])) if data.get('result') else 0, 'text_preview': (data.get('result',{}).get('text','') or '')[:500]}, indent=2))
+    doc = data.get('document', {})
+    print(json.dumps({'preview_url': data.get('artifacts',{}).get('preview_url'), 'page_count': doc.get('page_count', 0), 'text_preview': (doc.get('content',{}).get('text','') or '')[:500]}, indent=2))
 elif data.get('status') == 'failed':
     print('Error:', data.get('error'))
 "
@@ -129,20 +130,24 @@ with open('/tmp/deepread_structured_result.json') as f:
     data = json.load(f)
 print('Status:', data.get('status'))
 if data.get('status') == 'completed':
-    fields = data.get('result',{}).get('data',{})
+    fields = data.get('extraction',{}).get('fields',[])
     if fields: print(json.dumps(fields, indent=2))
-    print('Preview:', data.get('preview_url','N/A'))
+    print('Preview:', data.get('artifacts',{}).get('preview_url','N/A'))
 "
 ```
 
-Each field includes quality metadata:
+Each field comes back in a list under `extraction.fields[]` with quality metadata:
 ```json
 {
-  "vendor": {"value": "Acme Inc", "hil_flag": false, "found_on_page": 1},
-  "due_date": {"value": "2025-03-15", "hil_flag": true, "reason": "Multiple dates found"}
+  "extraction": {
+    "fields": [
+      {"key": "vendor", "value": "Acme Inc", "needs_review": false, "location": {"page": 1}},
+      {"key": "due_date", "value": "2025-03-15", "needs_review": true, "review_reason": "Multiple dates found", "location": {"page": 1}}
+    ]
+  }
 }
 ```
-`hil_flag: false` = auto-accept. `hil_flag: true` = needs human review.
+`needs_review: false` = auto-accept. `needs_review: true` = needs human review (check `review_reason`).
 
 ## Step 4: Blueprints (20-30% Better Accuracy)
 

@@ -40,7 +40,7 @@ Errors: 400 (bad schema/file), 401 (bad key), 413 (too large), 429 (quota/rate)
 **GET /v1/jobs/{job_id}** — Auth: `X-API-Key`. Poll: wait 5s, then 5-10s backoff (max 5 min).
 Statuses: `queued` → `processing` → `completed` | `failed`
 
-Completed: `{status, result: {text, text_preview, text_url (>1MB), data: {field: {value, hil_flag, found_on_page, reason?}}, pages: [{page_number, text, hil_flag, data}]}, metadata: {page_count, pipeline, review_percentage}, preview_url}`
+Completed (dp02 — every response has `schema_version: "dp02"`): `{id, status, schema_version, pipeline, document: {page_count, content: {format, text, text_preview, text_url (>1MB)}, layout}, extraction: {fields: [{key, value, needs_review, review_reason?, location: {page}}]}, pages: [{page_number, content: {format, text}, fields, needs_review}], review: {needs_review, quality_score, fields_total, fields_needing_review, review_rate, flags}, artifacts: {preview_url}, webhook: {url, delivered}}`
 
 **GET /v1/preview/{token}** — Auth: None. Public shareable preview.
 **GET /v1/pipelines** — Auth: None. `standard` (~2-3 min) | `searchable` PDF (~3-4 min)
@@ -58,7 +58,7 @@ Completed: `{status, result: {text, text_preview, text_url (>1MB), data: {field:
 
 ## Webhooks
 
-Add `webhook_url` to POST /v1/process. Always re-fetch via `GET /v1/jobs/{id}` — webhooks are unauthenticated. Return 2xx. Design for idempotency.
+Add `webhook_url` to POST /v1/process. The payload is identical to the `GET /v1/jobs/{id}` dp02 response (job identifier is `id`, not `job_id`; carries `schema_version: "dp02"`). Always re-fetch via `GET /v1/jobs/{id}` — webhooks are unauthenticated. Return 2xx. Design for idempotency.
 
 ## Rate Limits & Plans
 
@@ -115,4 +115,4 @@ curl -X POST https://api.deepread.tech/v1/process -H "X-API-Key: YOUR_KEY" \
 curl https://api.deepread.tech/v1/jobs/JOB_ID -H "X-API-Key: YOUR_KEY"
 ```
 
-**Quick ref:** No key → device flow (see deepread-setup) | Submit → POST /v1/process | Results → GET /v1/jobs/{id} | Structured → `schema` | Better accuracy → `blueprint_id` | Share → `preview_url` | HIL → filter by `hil_flag: true`
+**Quick ref:** No key → device flow (see deepread-setup) | Submit → POST /v1/process | Results → GET /v1/jobs/{id} | Structured → `schema` | Better accuracy → `blueprint_id` | Share → `artifacts.preview_url` | HIL → filter `extraction.fields[]` by `needs_review: true`
