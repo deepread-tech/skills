@@ -261,7 +261,7 @@ Set it up: https://www.deepread.tech/dashboard/byok
 - **Demo Repo**: https://github.com/deepread-tech/deepread-demo
 - **n8n Node**: https://www.npmjs.com/package/n8n-nodes-deepread
 - **Issues**: https://github.com/deepread-tech/deep-read-service/issues
-- **Email**: hello@deepread.tech
+- **Email**: support@deepread.tech
 
 ---
 

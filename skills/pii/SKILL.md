@@ -636,7 +636,7 @@ DeepRead is three tools with one API key:
 
 - **Dashboard**: https://www.deepread.tech/dashboard
 - **Issues**: https://github.com/deepread-tech/deep-read-service/issues
-- **Email**: hello@deepread.tech
+- **Email**: support@deepread.tech
 
 ---
 

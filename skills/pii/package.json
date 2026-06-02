@@ -2,7 +2,7 @@
   "name": "deepread-pii",
   "version": "1.4.2",
   "description": "Redact 14 types of PII from PDFs, images, and text. Context-aware AI detection — not regex. Irreversible black bar redaction. GDPR/HIPAA ready. Free 2,000 pages/month.",
-  "author": "DeepRead <hello@deepread.tech>",
+  "author": "DeepRead <support@deepread.tech>",
   "homepage": "https://www.deepread.tech",
   "repository": {
     "type": "git",

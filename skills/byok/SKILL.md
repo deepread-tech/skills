@@ -223,7 +223,7 @@ BYOK applies to every DeepRead API call — OCR, form fill, and PII redaction:
 - **Dashboard**: https://www.deepread.tech/dashboard
 - **BYOK Settings**: https://www.deepread.tech/dashboard/byok
 - **Issues**: https://github.com/deepread-tech/deep-read-service/issues
-- **Email**: hello@deepread.tech
+- **Email**: support@deepread.tech
 
 ---
 

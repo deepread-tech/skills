@@ -274,7 +274,7 @@ Set it up: https://www.deepread.tech/dashboard/byok
 - **Dashboard**: https://www.deepread.tech/dashboard
 - **Demo Repo**: https://github.com/deepread-tech/deepread-demo
 - **Issues**: https://github.com/deepread-tech/deep-read-service/issues
-- **Email**: hello@deepread.tech
+- **Email**: support@deepread.tech
 
 ---
 

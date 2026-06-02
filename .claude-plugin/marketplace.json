@@ -2,7 +2,7 @@
   "name": "deepread-skills",
   "owner": {
     "name": "DeepRead Technologies",
-    "email": "hello@deepread.tech"
+    "email": "support@deepread.tech"
   },
   "metadata": {
     "description": "DeepRead — AI-native document processing API. OCR, structured extraction, PDF form filling, PII redaction, and BYOK. 97%+ accuracy via multi-model consensus. Pre-built schemas for invoices, medical records, legal contracts, and insurance claims.",
