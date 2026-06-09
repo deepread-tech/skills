@@ -1,0 +1,42 @@
+name: DeepRead Daily Slack Report
+
+# Posts a daily DeepRead highlight + day-over-day ClawHub engagement stats to Slack.
+# Runs on GitHub's servers — independent of any local machine being awake.
+
+on:
+  schedule:
+    - cron: "37 3 * * *"   # 03:37 UTC == 09:07 IST (Asia/Kolkata)
+  workflow_dispatch: {}    # allows manual "Run workflow" from the Actions tab
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deepread-daily-slack
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (for the report script)
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Restore previous stats snapshot (for day-over-day deltas)
+        uses: actions/cache@v4
+        with:
+          path: .deepread-state
+          key: deepread-stats-${{ github.run_id }}
+          restore-keys: |
+            deepread-stats-
+
+      - name: Build and post the report
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DEEPREAD_REPORT_UNTIL: ${{ vars.DEEPREAD_REPORT_UNTIL }}
+          DEEPREAD_STATE_DIR: .deepread-state
+        run: python3 .github/scripts/daily-slack-report.py
