@@ -1,0 +1,48 @@
+name: DeepRead Publish New Skill Daily
+
+# Publishes the next queued NEW DeepRead skill to ClawHub once per day, from the
+# cloud (no local machine needed). One genuinely useful skill at a time, announced
+# in Slack. Edit .github/new-skills-queue.json to add more.
+
+on:
+  schedule:
+    - cron: "7 4 * * *"     # 04:07 UTC == 09:37 IST (30 min after the stats report)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deepread-publish-daily
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (skills + queue + script)
+        uses: actions/checkout@v4
+
+      - name: Set up Node (for the clawhub CLI)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Authenticate clawhub (no-op until you add the token yourself)
+        id: auth
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+        run: |
+          if [ -z "$CLAWHUB_TOKEN" ]; then
+            echo "::notice::CLAWHUB_TOKEN not set — pipeline is DORMANT. Add it in Settings → Secrets and variables → Actions to enable daily publishing."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          npx -y clawhub@latest login --token "$CLAWHUB_TOKEN" --no-browser
+
+      - name: Publish next queued skill
+        if: steps.auth.outputs.skip != 'true'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DEEPREAD_REPORT_UNTIL: ${{ vars.DEEPREAD_REPORT_UNTIL }}
+        run: python3 .github/scripts/publish-next-skill.py
