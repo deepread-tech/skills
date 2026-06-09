@@ -1,0 +1,17 @@
+{
+  "_comment": "Ordered queue of NEW DeepRead skills to publish to ClawHub, one per day. The daily workflow publishes the FIRST entry whose slug is not yet on the registry, then stops. Add new entries to the bottom to keep the campaign going. Each must be genuinely useful, standalone content — never filler.",
+  "skills": [
+    {
+      "folder": "bank-statements",
+      "slug": "deepread-bank-statements",
+      "name": "DeepRead Bank Statements",
+      "changelog": "Extract account holder, period, balances, and every transaction from bank statements as typed JSON. Built-in reconciliation check, per-field confidence flags, PII redaction for compliant sharing."
+    },
+    {
+      "folder": "resume-parser",
+      "slug": "deepread-resume-parser",
+      "name": "DeepRead Resume Parser",
+      "changelog": "Parse resumes/CVs into structured JSON — contact, work history, education, skills, years of experience. Handles any layout. Per-field confidence flags. PII redaction for bias-free screening."
+    }
+  ]
+}
