@@ -7,7 +7,12 @@ name: DeepRead Publish New Skill Daily
 on:
   schedule:
     - cron: "7 4 * * *"     # 04:07 UTC == 09:37 IST (30 min after the stats report)
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      republish_slug:
+        description: "Optional: republish this slug to fix its display name (e.g. deepread-bank-statements). Leave blank for the normal daily publish."
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -45,4 +50,5 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           DEEPREAD_REPORT_UNTIL: ${{ vars.DEEPREAD_REPORT_UNTIL }}
+          REPUBLISH_SLUG: ${{ github.event.inputs.republish_slug }}
         run: python3 .github/scripts/publish-next-skill.py
