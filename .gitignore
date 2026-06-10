@@ -1,3 +1,11 @@
 .DS_Store
 .claude/
 .clawhub/
+
+# Private growth/marketing kit — sales playbook, ICP, outreach, landing page.
+# Local-only: must never be pushed to this public repo.
+growth/
+
+# Python bytecode from the CI scripts (.github/scripts)
+__pycache__/
+*.pyc
