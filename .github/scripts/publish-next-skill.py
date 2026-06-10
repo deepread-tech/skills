@@ -60,6 +60,37 @@ def main():
     q = json.load(open(QUEUE))
     skills = q.get("skills", [])
     total = len(skills)
+
+    # One-shot (manual dispatch): fix the display name of an already-published skill.
+    republish = os.environ.get("REPUBLISH_SLUG", "").strip()
+    if republish:
+        entry = next((x for x in skills if x["slug"] == republish), None)
+        if not entry:
+            print(f"REPUBLISH_SLUG '{republish}' not in queue; nothing to do."); return
+        cur = "1.0.0"
+        try:
+            req = urllib.request.Request(REGISTRY.format(slug=republish), headers={"User-Agent": "deepread-publish/1.0"})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                cur = ((json.load(r).get("latestVersion") or {}).get("version")) or "1.0.0"
+        except Exception:
+            pass
+        p = (cur.lstrip("v").split(".") + ["0", "0", "0"])[:3]
+        try: maj, minr, pat = int(p[0]), int(p[1]), int(p[2])
+        except Exception: maj, minr, pat = 1, 0, 0
+        nextv = f"{maj}.{minr}.{pat + 1}"
+        path = os.path.join(ROOT, "skills", entry["folder"])
+        print(f"Republishing {republish} {cur} -> {nextv} as '{entry['name']}'")
+        cmd = ["npx", "-y", "clawhub@latest", "publish", path, "--slug", republish,
+               "--name", entry["name"], "--version", nextv,
+               "--changelog", "Display name and metadata update.", "--tags", "latest"]
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        print(r.stdout[-2000:]); print(r.stderr[-2000:], file=sys.stderr)
+        if r.returncode != 0:
+            slack(f":warning: DeepRead: failed to republish *{republish}* — check the Action log."); sys.exit(1)
+        slack(f":pencil2: DeepRead: display name fixed → *{entry['name']}* (`{republish}@{nextv}`).")
+        print(f"✅ republished {republish}@{nextv}")
+        return
+
     done = 0
 
     for e in skills:
@@ -74,7 +105,7 @@ def main():
 
         print(f"Publishing NEW skill: {slug}  (from skills/{folder})")
         cmd = ["npx", "-y", "clawhub@latest", "publish", path,
-               "--slug", slug, "--version", "1.0.0",
+               "--slug", slug, "--name", e["name"], "--version", "1.0.0",
                "--changelog", e.get("changelog", "Initial release."),
                "--tags", "latest"]
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
