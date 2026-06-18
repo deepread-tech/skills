@@ -103,7 +103,8 @@ Uploads a document for async processing. Returns immediately with a job ID.
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `file` | File | Yes | — | PDF, PNG, JPG, or JPEG |
-| `pipeline` | string | No | `"standard"` | `"standard"` or `"searchable"` |
+| `pipeline` | string | No | `"standard"` | Accuracy tier: `"standard"` (multi-model consensus) or `"fast"` (single-pass OCR) |
+| `searchable_pdf` | string | No | `"false"` | Set `"true"` to also produce a searchable PDF. **Standard tier only.** |
 | `schema` | string | No | — | JSON Schema for structured extraction |
 | `blueprint_id` | string | No | — | Blueprint UUID (mutually exclusive with schema) |
 | `include_images` | string | No | `"true"` | Generate preview images and page data |
@@ -250,8 +251,10 @@ Returns document preview data. Anyone with the token can view — no API key nee
 
 ### GET /v1/pipelines — List Pipelines (No Auth)
 
-- **standard** — Multi-model consensus (GPT + Gemini), dual OCR with LLM judge, ~2-3 minutes
-- **searchable** — Creates searchable PDF with embedded OCR text layer, ~3-4 minutes
+- **standard** — Multi-model consensus (GPT-5 Mini + Gemini 2.5 Flash), dual OCR with LLM judge, ~45-60s
+- **fast** — Single-pass OCR for speed and lower cost
+
+Searchable PDF is an **add-on, not a tier**: send `pipeline=standard` + `searchable_pdf=true` to also get a searchable PDF (`artifacts.searchable_pdf_url`). Legacy `pipeline=searchable` still works as an alias for that combination.
 
 ---
 

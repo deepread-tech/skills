@@ -45,7 +45,7 @@ HIGHLIGHTS = [
     "Pro is $99/mo for 50,000 pages (~$0.002/page). Nanonets starts at $499. That's the whole pitch to an operator.",
     "Shareable preview links (no auth) let a prospect click through their own extracted document — our best demo.",
     "One API does four jobs: OCR, structured JSON extraction, PII redaction, and PDF form-fill. No tool-stitching.",
-    "There's a `fast` pipeline for lowest-latency turnaround, alongside `standard` (consensus) and `searchable` (OCR'd PDF).",
+    "Two accuracy tiers — `fast` (lowest-latency) and `standard` (multi-model consensus) — plus an optional searchable-PDF add-on (`searchable_pdf=true`) on standard.",
     "Webhooks fire on completion so you never poll — always re-fetch the canonical job for an idempotent-safe pipeline.",
     "Schema-free mode: send no schema and still get clean OCR text + auto-detected fields back.",
     "Agent-native: Claude Code / Cursor / Windsurf skills mean a developer's AI writes the DeepRead integration itself.",
