@@ -28,6 +28,8 @@ Never show `device_code` or `api_key` to the user.
 | `file` | Yes | — | PDF, PNG, JPG, JPEG |
 | `pipeline` | No | `"standard"` | Accuracy tier: `"standard"` or `"fast"` |
 | `searchable_pdf` | No | `"false"` | `"true"` → also make a searchable PDF (standard tier only) |
+| `incognito` | No | `"false"` | `"true"` → document never stored in the clear, crypto-shredded when the job finishes (no preview link; not with `searchable_pdf`; results unaffected) |
+| `retention_days` | No | — | integer 1–365 → document, preview artifacts and results deleted N days after submission (content absent + preview 410 from the deadline on; `data_deleted_at` confirms) |
 | `schema` | No | — | JSON Schema string for structured extraction |
 | `blueprint_id` | No | — | UUID (mutually exclusive with schema) |
 | `include_images` | No | `"true"` | Preview images + page data |
@@ -41,7 +43,7 @@ Errors: 400 (bad schema/file), 401 (bad key), 413 (too large), 429 (quota/rate)
 **GET /v1/jobs/{job_id}** — Auth: `X-API-Key`. Poll: wait 5s, then 5-10s backoff (max 5 min).
 Statuses: `queued` → `processing` → `completed` | `failed`
 
-Completed (dp02 — every response has `schema_version: "dp02"`): `{id, status, schema_version, pipeline, searchable_pdf, document: {page_count, content: {format, text, text_preview, text_url (>1MB)}, layout}, extraction: {fields: [{key, value, needs_review, review_reason?, location: {page}}]}, pages: [{page_number, content: {format, text}, fields, needs_review}], review: {needs_review, quality_score, fields_total, fields_needing_review, review_rate, flags}, artifacts: {preview_url, searchable_pdf_url}, webhook: {url, delivered}}`
+Completed (dp02 — every response has `schema_version: "dp02"`): `{id, status, schema_version, pipeline, searchable_pdf, incognito, retention_expires_at (only with retention_days, until deletion), data_deleted_at (after the retention purge), document: {page_count, content: {format, text, text_preview, text_url (>1MB)}, layout}, extraction: {fields: [{key, value, needs_review, review_reason?, location: {page}}]}, pages: [{page_number, content: {format, text}, fields, needs_review}], review: {needs_review, quality_score, fields_total, fields_needing_review, review_rate, flags}, artifacts: {preview_url, searchable_pdf_url}, webhook: {url, delivered}}`
 
 **GET /v1/preview/{token}** — Auth: None. Public shareable preview.
 **GET /v1/pipelines** — Auth: None. Accuracy tiers: `standard` (~45-60s) | `fast`. Searchable PDF = `standard` + `searchable_pdf=true` add-on (not a tier).
