@@ -103,6 +103,8 @@ Uploads a document for async processing. Returns immediately with a job ID.
 | `file` | File | Yes | — | PDF, PNG, JPG, or JPEG |
 | `pipeline` | string | No | `"standard"` | Accuracy tier: `"standard"` (multi-model consensus) or `"fast"` (single-pass OCR) |
 | `searchable_pdf` | string | No | `"false"` | Set `"true"` to also produce a searchable PDF. **Standard tier only.** |
+| `incognito` | string | No | `"false"` | Set `"true"` to never store the document in the clear: encrypted with a single-use key in transit and crypto-shredded when the job finishes. No preview link; not combinable with `searchable_pdf`. Results are unaffected. |
+| `retention_days` | string | No | — | Delete everything about the job — document, preview artifacts, extracted results — this many days after submission (integer 1–365). From the deadline on `GET /v1/jobs/{id}` has no content and the preview link answers 410; `data_deleted_at` confirms deletion. Combines with `incognito`. |
 | `schema` | string | No | — | JSON Schema for structured extraction |
 | `blueprint_id` | string | No | — | Blueprint UUID (mutually exclusive with schema) |
 | `include_images` | string | No | `"true"` | Generate preview images and page data |
@@ -252,7 +254,9 @@ Returns document preview data. Anyone with the token can view — no API key nee
 - **standard** — Multi-model consensus (GPT-5 Mini + Gemini 2.5 Flash), dual OCR with LLM judge, ~45-60s
 - **fast** — Single-pass OCR for speed and lower cost
 
-Searchable PDF is an **add-on, not a tier**: send `pipeline=standard` + `searchable_pdf=true` to also get a searchable PDF (`artifacts.searchable_pdf_url`). Legacy `pipeline=searchable` still works as an alias for that combination.
+Searchable PDF is an **add-on, not a tier**: send `pipeline=standard` + `searchable_pdf=true` to also get a searchable PDF (`artifacts.searchable_pdf_url`).
+
+Two more add-ons govern **data handling** and work on every tier: `incognito=true` (the document is never stored in the clear and is crypto-shredded when the job finishes — no preview link, not with `searchable_pdf`; results unaffected) and `retention_days=N` (1–365: document, preview artifacts and results are deleted N days after submission; the response then carries `retention_expires_at` until deletion is confirmed by `data_deleted_at`, content is absent from the deadline on, and the preview link answers 410). Use both for a document that is never stored in the clear and results that expire. Legacy `pipeline=searchable` still works as an alias for that combination.
 
 ---
 
