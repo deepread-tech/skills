@@ -23,7 +23,7 @@ Upload any PDF form + your data as JSON. AI detects fields visually, maps your d
 | `url_expires_in` | No | `604800` | Signed URL expiry in seconds (min: 3600, max: 604800 = 7 days) |
 
 Response: `{"id": "uuid", "status": "queued"}`
-Errors: 400 (bad JSON/file), 401 (bad key), 429 (quota/rate)
+Errors: 400 (bad JSON/file), 401 (bad key), 402 (form fill not on plan — Enterprise — or credits do not cover the job), 413 (over 2,000 pages / 500 MB), 429 (rate or pages in flight; `Retry-After`)
 
 **GET /v1/form-fill/{job_id}** — Auth: `X-API-Key`. Rate limit: 20 req/60s. Poll: 5-10s intervals.
 Statuses: `queued` -> `processing` -> `completed` | `failed`
@@ -45,7 +45,19 @@ Typical: 90-95% verified, 2-5% flagged. Each flagged field has a `reason`.
 
 ## Webhooks
 
-Add `webhook_url` to POST /v1/form-fill. Always re-fetch via `GET /v1/form-fill/{id}` — webhooks are unauthenticated. Return 2xx. Design for idempotency.
+Add `webhook_url` to POST /v1/form-fill. Every delivery is signed: `X-DeepRead-Signature: t=<unix seconds>,v1=<hex>`, HMAC-SHA256 over `"<t>.<raw body>"` keyed by your account's secret (`GET /dashboard/v1/webhooks/secret`; rotate with `POST /dashboard/v1/webhooks/secret/rotate`). Verify over the exact bytes, compare in constant time, reject `t` older than 5 minutes. `GET /v1/form-fill/{id}` stays the canonical result. Return 2xx. Design for idempotency.
+
+```python
+import hmac, hashlib, time
+
+def verify(secret: str, header: str, body: bytes, tolerance: int = 300) -> bool:
+    parts = dict(p.split("=", 1) for p in header.split(","))
+    t = int(parts["t"])
+    if abs(time.time() - t) > tolerance:
+        return False
+    expected = hmac.new(secret.encode(), f"{t}.".encode() + body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, parts["v1"])
+```
 
 Completed payload: `{job_id, status: "completed", result: {filled_form_url, fields_detected, fields_filled, fields_verified, fields_hil_flagged, report}}`
 Failed payload: `{job_id, status: "failed", error, errors}`
@@ -56,11 +68,15 @@ Send `idempotency_key` to prevent duplicates. Same key returns same job ID.
 
 ## Rate Limits & Plans
 
-| Plan | Pages/month | Price |
-|------|-------------|-------|
-| Free | 2,000 | $0 (no credit card) |
-| Pro | 50,000 | $99/mo |
-| Scale | Custom | Custom pricing |
+Form fill is an **Enterprise** feature; other plans receive `402` with the plan named.
+
+| Plan | Pages | Price |
+|------|-------|-------|
+| Free | 2,000 a month (resets on your signup day); no form fill | $0 (no credit card) |
+| Standard | No page limits; no form fill | Prepaid credits from $10 per 1,000 pages (Parse $10, Extract $20, Deep Extract $40) |
+| Enterprise | Custom — includes form fill, PII redaction, searchable PDF, retention, incognito, BYOK | Custom |
+
+Submits per minute: 10 Free, 100 Standard, 500 Enterprise (`429` + `Retry-After` past the limit). Pages in flight (queued + processing jobs; a form-fill job counts as one page): 16 / 200 / 500. Hard maximum for everyone: 2,000 pages or 500 MB (`413`).
 
 Response headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Used`, `X-RateLimit-Reset`
 
@@ -112,7 +128,8 @@ curl https://api.deepread.tech/v1/form-fill/JOB_ID -H "X-API-Key: YOUR_KEY"
 
 - **400 "Only PDF files are supported"** — PDF only, other formats not yet supported
 - **400 "Invalid JSON in form_fields"** — Must be valid JSON object, not array or string
-- **429 quota exceeded** — Upgrade to PRO or wait for next billing cycle
+- **402 not on plan** — Form fill is an Enterprise feature; upgrade the plan
+- **429 with `Retry-After`** — Too many submits this minute or too many pages in flight; wait and retry with the same `idempotency_key`
 - **"Vision model timeout"** — Complex/large form. Try splitting into sections
 - **Fields not mapped** — Use descriptive key names: `"applicant_full_name"` not `"field1"`
 - **Fields flagged** — Expected for 2-5%. Check `report.fields` for `reason`

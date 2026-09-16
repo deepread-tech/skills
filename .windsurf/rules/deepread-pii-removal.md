@@ -22,7 +22,7 @@ Upload a document (PDF, text, image). AI detects 14 types of PII automatically, 
 | `language` | No | `"en"` | `en`, `zh`, `es`, `hi`, `ar` |
 
 Response: `{"id": "uuid", "status": "queued"}`
-Errors: 400 (bad format/params), 401 (bad key), 413 (too large), 429 (quota/rate)
+Errors: 400 (bad format/params), 401 (bad key), 402 (PII redaction not on plan — Enterprise — or credits do not cover the job), 413 (over 2,000 pages / 500 MB), 429 (rate or pages in flight; `Retry-After`)
 
 **GET /v1/pii/{job_id}** — Auth: `X-API-Key`. Poll: 5-10s intervals.
 Statuses: `queued` -> `processing` -> `completed` | `failed`
@@ -44,7 +44,19 @@ Failed: `{id, status: "failed", error: {code: "DOCUMENT_CORRUPTED", message: "..
 
 ## Webhooks
 
-Add `webhook_url` to POST /v1/pii/redact. Always re-fetch via `GET /v1/pii/{id}` — webhooks are unauthenticated. HTTPS only. Return 2xx. Design for idempotency.
+Add `webhook_url` to POST /v1/pii/redact. Every delivery is signed: `X-DeepRead-Signature: t=<unix seconds>,v1=<hex>`, HMAC-SHA256 over `"<t>.<raw body>"` keyed by your account's secret (`GET /dashboard/v1/webhooks/secret`; rotate with `POST /dashboard/v1/webhooks/secret/rotate`). Verify over the exact bytes, compare in constant time, reject `t` older than 5 minutes. `GET /v1/pii/{id}` stays the canonical result. HTTPS only. Return 2xx. Design for idempotency.
+
+```python
+import hmac, hashlib, time
+
+def verify(secret: str, header: str, body: bytes, tolerance: int = 300) -> bool:
+    parts = dict(p.split("=", 1) for p in header.split(","))
+    t = int(parts["t"])
+    if abs(time.time() - t) > tolerance:
+        return False
+    expected = hmac.new(secret.encode(), f"{t}.".encode() + body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, parts["v1"])
+```
 
 Completed payload: `{job_id, status: "completed", redacted_file_url, report: {page_count, processing_time_ms, pii_detected, total_redactions}}`
 Failed payload: `{job_id, status: "failed", error: {code, message}}`
@@ -55,11 +67,15 @@ Failed payload: `{job_id, status: "failed", error: {code, message}}`
 
 ## Rate Limits & Plans
 
-| Plan | Pages/month | Price |
-|------|-------------|-------|
-| Free | 2,000 | $0 (no credit card) |
-| Pro | 50,000 | $99/mo |
-| Scale | Custom | Custom pricing |
+PII redaction is an **Enterprise** feature; other plans receive `402` with the plan named.
+
+| Plan | Pages | Price |
+|------|-------|-------|
+| Free | 2,000 a month (resets on your signup day); no pii redaction | $0 (no credit card) |
+| Standard | No page limits; no pii redaction | Prepaid credits from $10 per 1,000 pages (Parse $10, Extract $20, Deep Extract $40) |
+| Enterprise | Custom — includes form fill, PII redaction, searchable PDF, retention, incognito, BYOK | Custom |
+
+Submits per minute: 10 Free, 100 Standard, 500 Enterprise (`429` + `Retry-After` past the limit). Pages in flight (queued + processing jobs; a form-fill job counts as one page): 16 / 200 / 500. Hard maximum for everyone: 2,000 pages or 500 MB (`413`).
 
 Response headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Used`, `X-RateLimit-Reset`
 
@@ -111,7 +127,8 @@ curl https://api.deepread.tech/v1/pii/JOB_ID -H "X-API-Key: YOUR_KEY"
 - **400 "Unsupported file format"** — PDF, TXT, PNG, JPEG only
 - **400 "Webhook URL must use HTTPS"** — Change `http://` to `https://`
 - **400 "Synthetic redaction style is not available"** — Use `black_bar`, `placeholder`, or `partial`
-- **429 quota exceeded** — Upgrade to PRO or wait for next billing cycle
+- **402 not on plan** — PII redaction is an Enterprise feature; upgrade the plan
+- **429 with `Retry-After`** — Too many submits this minute or too many pages in flight; wait and retry
 - **"DOCUMENT_CORRUPTED"** — File may be damaged. Try re-uploading
 
 **Quick ref:** No key -> device flow (see deepread-setup) | Redact -> POST /v1/pii/redact with `file` | Results -> GET /v1/pii/{id} | Download -> `redacted_file_url` | Styles -> black_bar/placeholder/partial | Non-English -> `language` param

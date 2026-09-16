@@ -105,7 +105,7 @@ elif data.get('status') == 'failed':
     print('Error:', data.get('error'))
 "
 ```
-Supports: PDF, PNG, JPG, JPEG. Max 15 MB (free) / 50 MB (paid).
+Free plan: PDF, PNG, JPEG; 15 MB and 50 pages per document. Standard adds TIFF, WebP, BMP, GIF, DOCX, TXT at 50 MB; Enterprise adds office, spreadsheet and HTML formats at 500 MB. A type your plan lacks is refused with 415.
 
 ## Step 3: Extract Structured Data
 
@@ -166,11 +166,13 @@ Use `schema` OR `blueprint_id`, not both.
 
 ## Plans
 
-| Plan | Pages/month | Max file | Per-doc limit | Price |
-|------|-------------|----------|---------------|-------|
-| Free | 2,000 | 15 MB | 50 pages | $0 |
-| Pro | 50,000 | 50 MB | Unlimited | $99/mo |
-| Scale | 1,000,000 | 50 MB | Unlimited | Custom |
+| Plan | Pages | Max file | Per-doc limit | Price |
+|------|-------|----------|---------------|-------|
+| Free | 2,000 a month (resets on your signup day) | 15 MB | 50 pages | $0 |
+| Standard | No page limits | 50 MB | Unlimited | Prepaid credits from $10 per 1,000 pages: Parse $10, Extract $20, Deep Extract $40 |
+| Enterprise | Custom | 500 MB | Unlimited | Custom — adds searchable PDF, retention, incognito, PII redaction, form fill, BYOK |
+
+`pipeline` picks the engine: `extract` (one OCR pass; the default on Free and Standard) or `deep-extract` (two passes, judged, with a second read that checks each field value; the default on Enterprise). Every job reports its `product`: `parse`, `extract` or `deep-extract`.
 
 ## Quick Reference
 

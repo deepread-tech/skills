@@ -28,7 +28,7 @@ DeepRead PII detects 14 types of personally identifiable information using conte
 - **Context-aware**: AI distinguishes personal vs. institutional, patient vs. provider, form labels vs. actual values
 - **Audit trail**: Every redaction logged with detection counts per type. See DeepRead's [privacy policy](https://www.deepread.tech/privacy) for data handling details.
 - **Copy-paste proof**: Redacted text cannot be recovered via copy-paste, text selection, or PDF parsing
-- **Free tier**: 2,000 pages/month (no credit card required)
+- **Enterprise feature**: PII redaction is included on Enterprise plans; other plans receive `402` with the plan named
 - **Works with other DeepRead skills**: Extract data with `deepread-ocr`, fill forms with `deepread-form-fill`, then redact the originals
 
 ## Setup
@@ -267,11 +267,11 @@ Document → AI Detection → Threshold Filter → Context Validation → Redact
 
 **Auth:** `X-API-Key: YOUR_KEY`
 **Content-Type:** `multipart/form-data`
-**Rate Limit:** 10 requests per 60 seconds
+**Rate Limit:** submits per minute by plan — 10 Free, 100 Standard, 500 Enterprise — counted per endpoint; past it the answer is `429` with `Retry-After`
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `file` | File | Yes | — | PDF, PNG, JPEG, or TXT (max 50MB) |
+| `file` | File | Yes | — | PDF, PNG, JPEG, or TXT (hard maximum 2,000 pages / 500 MB) |
 | `language` | string | No | `"en"` | `"en"`, `"zh"`, `"es"`, `"hi"`, `"ar"` |
 | `webhook_url` | string | No | — | HTTPS URL for completion notification |
 
@@ -292,8 +292,9 @@ Document → AI Detection → Threshold Filter → Context Validation → Redact
 | 400 | `DOCUMENT_CORRUPTED` | File is corrupt or unreadable |
 | 400 | `PASSWORD_PROTECTED` | Document is password-protected |
 | 401 | `UNAUTHORIZED` | Invalid or missing API key |
-| 413 | `FILE_TOO_LARGE` | Exceeds 50MB size limit |
-| 429 | `RATE_LIMITED` | Rate limit exceeded |
+| 402 | — | PII redaction is not on your plan (Enterprise), or the credits do not cover the job — the body names what is needed |
+| 413 | `FILE_TOO_LARGE` | Over the hard maximum: 2,000 pages or 500 MB |
+| 429 | `RATE_LIMITED` | Requests per minute or pages in flight exceeded (`Retry-After` says when to retry) |
 | 500 | `INTERNAL_ERROR` | Server error (retry or contact support) |
 
 ### GET /v1/pii/{job_id} — Get Redaction Results
@@ -531,6 +532,20 @@ curl -X POST https://api.deepread.tech/v1/pii/redact \
 
 Only use polling if you cannot expose a webhook endpoint.
 
+**Signature — verify every delivery.** Each POST carries `X-DeepRead-Signature: t=<unix seconds>,v1=<hex>`: HMAC-SHA256 over `"<t>.<raw request body>"` keyed by your account's signing secret (`GET /dashboard/v1/webhooks/secret`, created on first read; rotate with `POST /dashboard/v1/webhooks/secret/rotate`). Verify over the exact bytes you received, compare in constant time, and reject a `t` older than five minutes:
+
+```python
+import hmac, hashlib, time
+
+def verify(secret: str, header: str, body: bytes, tolerance: int = 300) -> bool:
+    parts = dict(p.split("=", 1) for p in header.split(","))
+    t = int(parts["t"])
+    if abs(time.time() - t) > tolerance:
+        return False
+    expected = hmac.new(secret.encode(), f"{t}.".encode() + body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, parts["v1"])
+```
+
 ### 2. Review the Detection Report
 
 The report tells you exactly what was found and where:
@@ -575,15 +590,14 @@ while True:
 
 ## Rate Limits & Pricing
 
-### Free Tier (No Credit Card)
-- **2,000 pages/month**
-- **10 requests/minute** (redact endpoint)
-- **60 requests/minute** (status endpoint)
-- Full feature access
+PII redaction is an **Enterprise** feature; other plans receive `402` with the plan named.
 
-### Paid Plans
-- **PRO**: 50,000 pages/month, 100 req/min @ $99/mo
-- **SCALE**: Custom volume pricing
+### Plans
+- **Free**: 2,000 pages/month (resets on your signup day), 10 submits/minute, 16 pages in flight — OCR and extraction only, no PII redaction
+- **Standard**: prepaid credits from $10 per 1,000 pages (Parse $10, Extract $20, Deep Extract $40), no page limits, 100 submits/minute, 200 pages in flight — no PII redaction
+- **Enterprise**: custom pricing, 500 submits/minute, 500 pages in flight, 500 MB files — includes PII redaction, form fill, searchable PDF, retention, incognito, BYOK
+
+Status endpoint: 60 requests/minute. Hard maximum for everyone: 2,000 pages or 500 MB (`413`). Past a limit the answer is `429` with `Retry-After`.
 
 **Upgrade:** https://www.deepread.tech/dashboard/billing?utm_source=clawhub
 
@@ -596,7 +610,7 @@ while True:
 **Solution:** File has no content. Check the file is not corrupted or zero-bytes.
 
 ### Error: `FILE_TOO_LARGE`
-**Solution:** Compress the file or split into smaller documents. Max 50MB.
+**Solution:** Compress the file or split into smaller documents. Hard maximum 2,000 pages / 500 MB.
 
 ### No PII detected in report
 **Possible causes:**
@@ -616,7 +630,7 @@ while True:
 - Documents are uploaded to DeepRead servers for processing and redacted copies are returned via signed URLs
 - This skill does not modify any system files, install packages, or request elevated permissions
 - Keep `DEEPREAD_API_KEY` secret — rotate if compromised
-- If using webhooks, ensure your receiving endpoint uses HTTPS and is authenticated
+- If using webhooks, use HTTPS and verify `X-DeepRead-Signature` (HMAC-SHA256 over `"<t>.<raw body>"` with the secret from `GET /dashboard/v1/webhooks/secret`) before trusting a delivery
 - Test with non-sensitive documents first to verify behavior
 - Review DeepRead's [privacy policy](https://www.deepread.tech/privacy) for data retention and handling details
 

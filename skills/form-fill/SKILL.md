@@ -64,7 +64,9 @@ Uploads a PDF form + JSON data for async processing. Returns immediately with a 
 |--------|---------|
 | 400 | Only PDF files are supported, or invalid JSON in form_fields |
 | 401 | Invalid or missing API key |
-| 429 | Monthly page quota exceeded or rate limit hit |
+| 402 | Form fill is not on your plan (Enterprise), or the credits do not cover the job — the body names what is needed |
+| 413 | Over the hard maximum: 2,000 pages or 500 MB |
+| 429 | Requests per minute or pages in flight exceeded — `Retry-After` says when to retry (a form-fill job counts as one page in flight) |
 
 ---
 
@@ -214,8 +216,22 @@ Pass `webhook_url` when submitting a form to get notified on completion.
 }
 ```
 
+**Signature — verify every delivery.** Each POST carries `X-DeepRead-Signature: t=<unix seconds>,v1=<hex>`: HMAC-SHA256 over `"<t>.<raw request body>"` keyed by your account's signing secret (`GET /dashboard/v1/webhooks/secret`, created on first read; rotate with `POST /dashboard/v1/webhooks/secret/rotate`). Verify over the exact bytes you received, compare in constant time, and reject a `t` older than five minutes:
+
+```python
+import hmac, hashlib, time
+
+def verify(secret: str, header: str, body: bytes, tolerance: int = 300) -> bool:
+    parts = dict(p.split("=", 1) for p in header.split(","))
+    t = int(parts["t"])
+    if abs(time.time() - t) > tolerance:
+        return False
+    expected = hmac.new(secret.encode(), f"{t}.".encode() + body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, parts["v1"])
+```
+
 **Important:**
-- Webhooks are **NOT authenticated** — always fetch the canonical result via `GET /v1/form-fill/{job_id}` with your API key
+- Verify the signature before trusting a payload; `GET /v1/form-fill/{job_id}` stays the canonical result if you ever need to re-fetch
 - Must be HTTPS
 - Return 2xx to confirm delivery
 - Make your endpoint idempotent (may receive duplicates)
@@ -411,21 +427,25 @@ curl -X POST https://api.deepread.tech/v1/form-fill \
 |-------|-----|
 | 400 "Only PDF files are supported" | Upload a `.pdf` file. Other formats are not yet supported. |
 | 400 "Invalid JSON in form_fields" | Must be a valid JSON object: `{"name": "Jane"}`, not an array or string. |
-| 429 "Monthly page quota exceeded" | Upgrade to Pro or wait until next billing cycle. |
+| 402 "Form fill is not on the ... plan" | Form fill is an Enterprise feature — upgrade the plan. |
+| 429 with `Retry-After` | Too many submits this minute, or too many pages in flight. Wait the seconds given and retry with the same `idempotency_key`. |
 | Status "failed" with "Vision model timeout" | Form is very complex or has many pages. Try splitting into smaller sections. |
 | Fields not mapped correctly | Use descriptive JSON keys: `"applicant_full_name"` not `"field1"`. The AI uses key names to match fields. |
 | Fields flagged for review | Expected for 2-5% of fields. Check `report.fields` for the `reason` on each flagged field. |
 
 ---
 
-## Rate Limits
+## Rate Limits & Plans
 
-**Plans:**
-| Plan | Pages/month | Price |
-|------|-------------|-------|
-| Free | 2,000 | $0 (no credit card) |
-| Pro | 50,000 | $99/mo |
-| Scale | Custom | Custom |
+Form fill is an **Enterprise** feature; other plans receive `402` with the plan named.
+
+| Plan | Pages | Price |
+|------|-------|-------|
+| Free | 2,000 a month (resets on your signup day); no form fill | $0 (no credit card) |
+| Standard | No page limits; no form fill | Prepaid credits from $10 per 1,000 pages (Parse $10, Extract $20, Deep Extract $40) |
+| Enterprise | Custom — includes form fill, PII redaction, searchable PDF, retention, incognito, BYOK | Custom |
+
+Submits per minute: 10 Free, 100 Standard, 500 Enterprise (`429` + `Retry-After` past the limit). Pages in flight (queued + processing jobs; a form-fill job counts as one page): 16 / 200 / 500. Hard maximum for everyone: 2,000 pages or 500 MB (`413`).
 
 ---
 
