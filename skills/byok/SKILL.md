@@ -14,7 +14,7 @@ Without BYOK:  You → DeepRead API → DeepRead pays OpenRouter → You pay Dee
 With BYOK:     You → DeepRead API → YOUR key pays provider   → DeepRead cost = $0
 ```
 
-**Page quota is skipped entirely for BYOK users.** Process unlimited pages on any plan.
+**Page quota is skipped entirely for BYOK users.** BYOK is an Enterprise feature; other plans receive `402` from the provider-keys endpoints.
 
 > **What this skill does and what it touches:** This skill helps agents guide users through BYOK setup. The agent opens the DeepRead dashboard (`https://www.deepread.tech/dashboard/byok`) in the user's browser so the user can paste their provider key directly into DeepRead's UI. It does not collect, store, or transmit provider keys itself. The `DEEPREAD_API_KEY` is read from the user's environment — this skill does not modify any system files, shell profiles, or `.env` files.
 
@@ -200,7 +200,7 @@ DeepRead validates provider keys against the provider's API before encrypting an
 - You have Google Cloud credits you want to apply to document processing
 - You want zero DeepRead LLM costs and unlimited page processing
 - You need all AI calls to go through your own provider account for compliance
-- You're on the free tier and want to skip the 2,000 page/month limit
+- You're on Enterprise and want LLM spend on your own provider account
 
 **Don't use BYOK if:**
 

@@ -100,19 +100,22 @@ Uploads a document for async processing. Returns immediately with a job ID.
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `file` | File | Yes | — | PDF, PNG, JPG, or JPEG |
-| `pipeline` | string | No | `"standard"` | Accuracy tier: `"standard"` (multi-model consensus) or `"fast"` (single-pass OCR) |
-| `searchable_pdf` | string | No | `"false"` | Set `"true"` to also produce a searchable PDF. **Standard tier only.** |
-| `incognito` | string | No | `"false"` | Set `"true"` to never store the document in the clear: encrypted with a single-use key in transit and crypto-shredded when the job finishes. No preview link; not combinable with `searchable_pdf`. Results are unaffected. |
-| `retention_days` | string | No | — | Delete everything about the job — document, preview artifacts, extracted results — this many days after submission (integer 1–365). From the deadline on `GET /v1/jobs/{id}` has no content and the preview link answers 410; `data_deleted_at` confirms deletion. Combines with `incognito`. |
+| `file` | File | Yes | — | PDF, PNG or JPEG on every plan. Standard adds TIFF, WebP, BMP, GIF, DOCX, TXT; Enterprise adds more (see Rate Limits & Plans). A type your plan lacks is refused with `415` naming the plan that has it. |
+| `pipeline` | string | No | plan default | Engine: `"extract"` (one OCR pass) or `"deep-extract"` (two OCR passes reconciled by an LLM judge, plus a second read that checks each extracted field value). Default: Free and Standard run `extract`, Enterprise runs `deep-extract`. The older names `fast`, `standard` and `searchable` still work as aliases (`fast` = `extract`, `standard` = `deep-extract`, `searchable` = `deep-extract` + `searchable_pdf=true`); a job's responses show the name you sent. |
 | `schema` | string | No | — | JSON Schema for structured extraction |
 | `blueprint_id` | string | No | — | Blueprint UUID (mutually exclusive with schema) |
-| `include_images` | string | No | `"true"` | Generate preview images and page data |
-| `include_pages` | string | No | `"false"` | Per-page breakdown (auto-enabled when include_images=true) |
-| `webhook_url` | string | No | — | HTTPS URL to notify on completion |
+| `preview` | string | No | `"true"` | Page images, a public preview link, and each extracted field located on the page (`location.bounding_box`). Send `"false"` to skip all three. Replaces `include_images` (deprecated but honoured). On the Free plan the preview link and stored page images are off, but field locations are still returned. |
+| `per_page` | string | No | `"false"` | Per-page breakdown in `pages[]`. Replaces `include_pages` (deprecated but honoured). |
+| `webhook_url` | string | No | — | HTTPS URL to notify on completion. Standard plan and up (`402` on Free). Deliveries are signed — see Webhooks. |
+| `idempotency_key` | string | No | — | Up to 255 characters, unique per account. A retry with the same key returns the job the first request created (`200`, with its current status) instead of creating and charging a second job. The same key with a different file or different options is refused with `409`. |
+| `searchable_pdf` | string | No | `"false"` | Set `"true"` to also produce a searchable PDF (`artifacts.searchable_pdf_url`). A Deep Extract add-on: `deep-extract` only, Enterprise plans. |
+| `incognito` | string | No | `"false"` | Enterprise plans. Set `"true"` to never store the document in the clear: encrypted with a single-use key before it reaches storage and crypto-shredded when the job finishes. No preview link and no field locations; not combinable with `searchable_pdf`. Results are unaffected. |
+| `retention_days` | string | No | — | Enterprise plans. Delete everything about the job — document, preview artifacts, extracted results — this many days after submission (integer 1–365). From the deadline on `GET /v1/jobs/{id}` has no content and the preview link answers 410; `data_deleted_at` confirms deletion. Combines with `incognito`. |
 | `version` | string | No | — | Pipeline version for reproducibility |
 
 **Note:** Provide `schema` OR `blueprint_id`, not both. Without either, only OCR text is returned.
+
+Every job reports its `product` — what it was sold as: `parse` (`extract` without a schema), `extract` (`extract` with a schema or blueprint) or `deep-extract` (the `deep-extract` engine, with or without a schema). The deprecated `include_markers` is still honoured as an explicit on/off override for field locating.
 
 **Response (200 OK):**
 ```json
@@ -125,10 +128,13 @@ Uploads a document for async processing. Returns immediately with a job ID.
 **Errors:**
 | Status | Meaning |
 |--------|---------|
-| 400 | Invalid schema, unsupported file type, both schema and blueprint_id provided |
+| 400 | Invalid schema, both schema and blueprint_id provided, a file that cannot be converted, or a Free-plan document over 50 pages |
 | 401 | Invalid or missing API key |
-| 413 | File exceeds plan limit (15MB free, 50MB paid) |
-| 429 | Monthly page quota exceeded or rate limit hit |
+| 402 | The plan does not include the feature (`webhook_url` on Free; `searchable_pdf`, `incognito`, `retention_days` outside Enterprise), or the credits do not cover the job — the body names what is needed |
+| 409 | `idempotency_key` was used before with a different file or different options |
+| 413 | Over the plan's file size (15 MB Free, 50 MB Standard, 500 MB Enterprise) or the hard maximum for everyone: 2,000 pages or 500 MB |
+| 415 | The plan does not accept this file type (the body names the plan that does) |
+| 429 | Requests per minute, pages in flight, or the Free monthly quota exceeded — `Retry-After` says when to try again |
 
 ---
 
@@ -147,7 +153,8 @@ Every response carries `"schema_version": "dp02"`.
   "id": "550e8400-...",
   "status": "completed",
   "schema_version": "dp02",
-  "pipeline": "standard",
+  "pipeline": "deep-extract",
+  "product": "deep-extract",
   "created_at": "2025-01-18T10:30:00Z",
   "completed_at": "2025-01-18T10:32:15Z",
   "document": {
@@ -166,8 +173,8 @@ Every response carries `"schema_version": "dp02"`.
   },
   "extraction": {
     "fields": [
-      {"key": "vendor", "value": "Acme Inc", "needs_review": false, "location": {"page": 1}},
-      {"key": "total", "value": 1250.00, "needs_review": true, "review_reason": "Outside typical range", "location": {"page": 1}}
+      {"key": "vendor", "value": "Acme Inc", "needs_review": false, "location": {"page": 1, "bounding_box": {"x": 0.06, "y": 0.30, "width": 0.31, "height": 0.05}}},
+      {"key": "total", "value": 1250.00, "needs_review": true, "review_reason": "Outside typical range", "location": {"page": 1, "bounding_box": {"x": 0.62, "y": 0.81, "width": 0.18, "height": 0.04}}}
     ]
   },
   "pages": [
@@ -205,11 +212,12 @@ Every response carries `"schema_version": "dp02"`.
 **Notes:**
 - `document.content.text_url` is provided when full text exceeds 1MB — fetch from this URL instead
 - `document.content.text_preview` is always the first 500 characters
-- `extraction.fields` is only present if `schema` or `blueprint_id` was provided — a **list** of `{key, value, needs_review, review_reason?, location.page}`
-- `pages` is present when `include_pages=true` or `include_images=true`; per-page auto-detected fields are in `pages[].fields[]`
+- `extraction.fields` is only present if `schema` or `blueprint_id` was provided — a **list** of `{key, value, needs_review, review_reason?, location: {page, bounding_box}}`
+- `pages` is present when `per_page=true` (or the deprecated `include_pages=true`); per-page auto-detected fields are in `pages[].fields[]`
 - `document.layout` is a typed object (was the old `result.json_string` blob)
-- `artifacts.preview_url` is a shareable link (no auth needed) to the HIL review interface
-- Bounding boxes (with `include_markers=true`) are returned under top-level `grounding[]`
+- `artifacts.preview_url` is a shareable link (no auth needed) to the HIL review interface; not produced on the Free plan or for `incognito` jobs
+- Each extracted field carries `location.bounding_box` (0–1 fractions of page width/height, origin top-left) and `location.page`. Locating runs by default and follows `preview`: on unless you send `preview=false`, always off for `incognito` jobs. On the Free plan the preview link and stored page images are off, but locations are still returned. Located layout blocks are also listed under top-level `grounding[]`. The deprecated `include_markers` is still honoured as an explicit on/off override.
+- `product` says what the job was sold as: `parse`, `extract` or `deep-extract`
 
 **Response (failed):**
 ```json
@@ -243,20 +251,27 @@ Returns document preview data. Anyone with the token can view — no API key nee
     }
   ],
   "data": {},
-  "metadata": {"page_count": 1, "pipeline": "standard", "review_percentage": 0}
+  "metadata": {"page_count": 1, "pipeline": "deep-extract", "review_percentage": 0}
 }
 ```
 
 ---
 
-### GET /v1/pipelines — List Pipelines (No Auth)
+### GET /v1/pipelines — List Engines and Products (No Auth)
 
-- **standard** — Multi-model consensus (GPT-5 Mini + Gemini 2.5 Flash), dual OCR with LLM judge, ~45-60s
-- **fast** — Single-pass OCR for speed and lower cost
+Lists the engines (with their aliases) and the products with list prices.
 
-Searchable PDF is an **add-on, not a tier**: send `pipeline=standard` + `searchable_pdf=true` to also get a searchable PDF (`artifacts.searchable_pdf_url`).
+| You send | Engine that runs | Product | Price / 1,000 pages |
+|----------|------------------|---------|---------------------|
+| `pipeline=extract`, no schema | one OCR pass | **Parse** — the document as Markdown with tables, layout blocks and bounding boxes | $10 |
+| `pipeline=extract` + `schema` or `blueprint_id` | one OCR pass | **Extract** — Parse plus your fields, each with a review flag and its location | $20 |
+| `pipeline=deep-extract`, with or without a schema | two OCR passes reconciled by an LLM judge, rotation correction, and a second read that checks each extracted field value (~45-60s) | **Deep Extract** | $40 |
 
-Two more add-ons govern **data handling** and work on every tier: `incognito=true` (the document is never stored in the clear and is crypto-shredded when the job finishes — no preview link, not with `searchable_pdf`; results unaffected) and `retention_days=N` (1–365: document, preview artifacts and results are deleted N days after submission; the response then carries `retention_expires_at` until deletion is confirmed by `data_deleted_at`, content is absent from the deadline on, and the preview link answers 410). Use both for a document that is never stored in the clear and results that expire. Legacy `pipeline=searchable` still works as an alias for that combination.
+Default when `pipeline` is omitted: Free and Standard run `extract`; Enterprise runs `deep-extract`. The older names still work as aliases — `fast` = `extract`, `standard` = `deep-extract`, `searchable` = `deep-extract` + `searchable_pdf=true` — and a job's responses show the name you sent. Every job reports its `product`.
+
+Searchable PDF is a **Deep Extract add-on, not a tier**: send `pipeline=deep-extract` + `searchable_pdf=true` (Enterprise plans) to also get a searchable PDF (`artifacts.searchable_pdf_url`). `extract` doesn't support it.
+
+Two more add-ons govern **data handling** (Enterprise plans, either engine): `incognito=true` (the document is never stored in the clear and is crypto-shredded when the job finishes — no preview link, no field locations, not with `searchable_pdf`; results unaffected) and `retention_days=N` (1–365: document, preview artifacts and results are deleted N days after submission; the response then carries `retention_expires_at` until deletion is confirmed by `data_deleted_at`, content is absent from the deadline on, and the preview link answers 410). Use both for a document that is never stored in the clear and results that expire.
 
 ---
 
@@ -346,7 +361,7 @@ curl -X POST https://api.deepread.tech/v1/process \
 
 ## Webhooks
 
-Pass `webhook_url` when submitting a document to get notified on completion.
+Pass `webhook_url` when submitting a document to get notified on completion. Available from the Standard plan — a Free-plan request that sends it is refused with `402` and a body naming the plan that has it.
 
 **Payload sent to your URL:** identical to the `GET /v1/jobs/{job_id}` response above (same dp02 shape). The job identifier is `id` (not `job_id`), and it carries `"schema_version": "dp02"`.
 
@@ -355,25 +370,41 @@ Pass `webhook_url` when submitting a document to get notified on completion.
   "id": "550e8400-...",
   "status": "completed",
   "schema_version": "dp02",
-  "pipeline": "standard",
+  "pipeline": "deep-extract",
+  "product": "deep-extract",
   "document": {"page_count": 3, "content": {"format": "markdown", "text": "..."}},
-  "extraction": {"fields": [{"key": "vendor", "value": "Acme Inc", "needs_review": false, "location": {"page": 1}}]},
+  "extraction": {"fields": [{"key": "vendor", "value": "Acme Inc", "needs_review": false, "location": {"page": 1, "bounding_box": {"x": 0.06, "y": 0.30, "width": 0.31, "height": 0.05}}}]},
   "review": {"needs_review": false, "fields_total": 20, "fields_needing_review": 0, "review_rate": 0.0, "flags": []},
   "artifacts": {"preview_url": "https://preview.deepread.tech/..."},
   "webhook": {"url": "https://yourapp.com/webhook", "delivered": true}
 }
 ```
 
+**Signature — verify every delivery.** Each POST carries `X-DeepRead-Signature: t=<unix seconds>,v1=<hex>`, where `v1` is HMAC-SHA256 over `"<t>.<raw request body>"` keyed by your account's signing secret. Read the secret at `GET /dashboard/v1/webhooks/secret` (created on first read) and rotate it at `POST /dashboard/v1/webhooks/secret/rotate` — deliveries sign with the new secret from the next one on. Verify over the exact bytes you received, compare in constant time, and reject a `t` older than five minutes:
+
+```python
+import hmac, hashlib, time
+
+def verify(secret: str, header: str, body: bytes, tolerance: int = 300) -> bool:
+    parts = dict(p.split("=", 1) for p in header.split(","))
+    t = int(parts["t"])
+    if abs(time.time() - t) > tolerance:
+        return False
+    expected = hmac.new(secret.encode(), f"{t}.".encode() + body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, parts["v1"])
+```
+
 **Important:**
-- Webhooks are **NOT authenticated** — always fetch the canonical result via `GET /v1/jobs/{job_id}` with your API key
+- Verify the signature before trusting a payload; a verified body is the same dp02 document `GET /v1/jobs/{job_id}` returns, so no re-fetch is needed
 - Must be HTTPS
-- Return 2xx to confirm delivery
-- Delivery is best-effort — use polling as fallback if webhook not received
+- Return 2xx within 30 seconds to confirm delivery; non-2xx responses are retried with exponential backoff
+- `failed` is a final verdict — transient errors on DeepRead's side are retried for up to 48 hours while the job keeps reporting `queued`/`processing`
+- Delivery status is also on `GET /v1/jobs/{job_id}` (`webhook.delivered`, `webhook.delivered_at`, `webhook.error`) — poll as a fallback if a webhook is not received
 - Make your endpoint idempotent (may receive duplicates)
 
 ---
 
-## Rate Limits
+## Rate Limits & Plans
 
 Every response includes these headers:
 
@@ -382,14 +413,24 @@ Every response includes these headers:
 | `X-RateLimit-Limit` | Monthly pages in your plan |
 | `X-RateLimit-Remaining` | Pages remaining this cycle |
 | `X-RateLimit-Used` | Pages used this cycle |
-| `X-RateLimit-Reset` | Unix timestamp when quota resets |
+| `X-RateLimit-Reset` | Unix timestamp of your account's own next reset (on Free, the signup day of the month) |
 
 **Plans:**
-| Plan | Pages/month | Max file | Per-doc limit | Rate limit |
-|------|-------------|----------|---------------|------------|
-| Free | 2,000 | 15 MB | 50 pages | 10 req/min |
-| Pro ($99/mo) | 50,000 | 50 MB | Unlimited | 100 req/min |
-| Scale | 1,000,000 | 50 MB | Unlimited | 500 req/min |
+| Plan | Pages | Per document | Max file | File types | Submits/min | Pages in flight |
+|------|-------|--------------|----------|------------|-------------|-----------------|
+| Free | 2,000 a month; the counter resets on the day you signed up, unused pages do not carry over | 50 pages | 15 MB | PDF, PNG, JPEG | 10 | 16 |
+| Standard | Prepaid credits from $10 per 1,000 pages — Parse $10, Extract $20, Deep Extract $40; no page limits | — | 50 MB | + TIFF, WebP, BMP, GIF, DOCX, TXT | 100 | 200 |
+| Enterprise | Custom (purchase order, invoiced monthly) | — | 500 MB | + APNG, PSD, PCX, PPM, CUR, DCX, FTEX, PIXAR, DOC, DOTX, ODT, RTF, WPD, PPT, PPTX, ODP, HTML, CSV, XLSX, XLSM, XLS, XLTX, XLTM, ODS | 500 | 500 |
+
+Enterprise also has the searchable PDF, retention and incognito add-ons, PII redaction, form fill and BYOK (your own provider keys). Webhooks, blueprints and the optimizer are on Standard and up. A feature the plan lacks is refused with `402`. Pro, Scale and BYOK are legacy account names, not plans you can buy: legacy Pro has the Standard limits, legacy Scale and BYOK the Enterprise ones.
+
+- **Submits per minute** — counted per endpoint (`POST /v1/process`, `/v1/form-fill`, `/v1/pii/redact`, `/v1/optimize`) across every API server. Over the limit: `429` with a `Retry-After` header (seconds until the minute turns) and a body naming the limit. A refused request counts too.
+- **Pages in flight** — the pages of your queued and processing jobs, added up. A submission is admitted when you have nothing in flight (one large document is never refused for being large) or when its pages fit under the cap; otherwise `429`, `Retry-After: 30`, and a body giving `pages_in_flight`, `max_pages_in_flight` and `pages_requested`. Nothing is queued — resubmit when a job finishes. OCR, PII redaction and form-fill jobs share the one budget (a form-fill job counts as one page). This is an admission limit, not reserved capacity.
+- **Hard maximum for everyone** — no document over 2,000 pages or 500 MB is accepted on any plan (`413` with the limit in the body).
+- **File types** — a type the plan does not accept is `415` with a body naming the plan that has it. Everything that is not a PDF, PNG or JPEG is converted to PDF before the page count; spreadsheets paginate sheet by sheet, and the page count is what is charged.
+- **Free monthly quota** — a document that would take the account past 2,000 pages is refused whole with `429` (no job is created) until the cycle resets.
+- **Polling** (`GET /v1/jobs/{job_id}`) — Free 20 a minute, Standard 60, Enterprise 150.
+- **Retrying safely** — send `idempotency_key` on `POST /v1/process` whenever you retry after a timeout, a `429` or a dropped connection: the same key returns the job the first request created (`200`) instead of charging a second job; the same key with a different file or options is `409`.
 
 ---
 
@@ -402,22 +443,36 @@ All errors return:
 
 | Status | Meaning |
 |--------|---------|
-| 400 | Bad request — invalid schema, unsupported file, both schema + blueprint_id |
+| 400 | Bad request — invalid schema, both schema + blueprint_id, a file that cannot be converted, a Free-plan document over 50 pages |
 | 401 | Invalid or missing API key |
+| 402 | The plan does not include the feature, or the credits do not cover the job (the body names what is needed) |
 | 404 | Job not found |
-| 413 | File too large for your plan |
-| 429 | Rate limit or monthly quota exceeded |
+| 409 | The idempotency key was used before with a different request |
+| 413 | The document is over the plan's file size or the hard maximum (2,000 pages, 500 MB) |
+| 415 | The plan does not accept this file type (the body names the plan that does) |
+| 429 | Requests per minute, pages in flight, or the Free monthly quota exceeded (`Retry-After` says when to try again) |
 | 500 | Server error |
 
-**Quota exceeded (429):**
+**Feature not on plan (402):**
 ```json
 {
   "detail": {
-    "error": "page_count_exceeded",
-    "message": "Document has 100 pages, exceeds 50-page limit for FREE plan. Upgrade to PRO.",
-    "page_count": 100,
-    "max_pages": 50,
-    "plan": "free"
+    "feature": "webhooks",
+    "current_plan": "free",
+    "required_plans": ["standard", "enterprise", "pro", "scale", "byok"],
+    "message": "Webhooks is available from the Standard plan. Visit /dashboard/billing to upgrade."
+  }
+}
+```
+
+**Pages in flight (429, `Retry-After: 30`):**
+```json
+{
+  "detail": {
+    "pages_in_flight": 14,
+    "max_pages_in_flight": 16,
+    "pages_requested": 5,
+    "message": "..."
   }
 }
 ```
@@ -690,8 +745,9 @@ curl -X POST https://api.deepread.tech/v1/process \
 - **Send a document** → POST /v1/process, show code in their language
 - **Structured data** → help write a JSON Schema with descriptive field descriptions
 - **Better accuracy** → explain blueprints, help set up optimizer
-- **Real-time updates** → set up webhook_url, build receiver endpoint
-- **Hitting errors** → check API key, plan limits, file format, schema validity
+- **Pick an engine** → `extract` (one pass: Parse, or Extract with a schema) for speed and cost, `deep-extract` (judged second pass) for accuracy; `searchable_pdf=true` needs `deep-extract` on Enterprise
+- **Real-time updates** → set up webhook_url (Standard and up), verify `X-DeepRead-Signature` in the receiver
+- **Hitting errors** → check API key, plan limits (402 feature or credits, 413 size, 415 file type, 429 rate, in-flight or quota), file format, schema validity
 - **Share results** → use `artifacts.preview_url` from response (no auth needed)
 - **Large documents** → use `document.content.text_url` instead of `document.content.text` for docs > 1MB
 - **Review workflow** → filter `extraction.fields[]` by `needs_review`, route flagged ones to human review

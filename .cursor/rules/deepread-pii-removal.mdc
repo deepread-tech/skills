@@ -51,8 +51,9 @@ Processing is **asynchronous** — poll the GET endpoint or use a webhook.
 |--------|---------|
 | 400 | Unsupported format, empty file, invalid params, non-HTTPS webhook |
 | 401 | Invalid or missing API key |
-| 413 | File exceeds size limit |
-| 429 | Monthly page quota exceeded or rate limit hit |
+| 402 | PII redaction is not on your plan (Enterprise), or the credits do not cover the job — the body names what is needed |
+| 413 | Over the hard maximum: 2,000 pages or 500 MB |
+| 429 | Requests per minute or pages in flight exceeded — `Retry-After` says when to retry |
 
 ---
 
@@ -127,8 +128,22 @@ If you provide `webhook_url`, DeepRead POSTs results when the job finishes:
 }
 ```
 
+**Signature — verify every delivery.** Each POST carries `X-DeepRead-Signature: t=<unix seconds>,v1=<hex>`: HMAC-SHA256 over `"<t>.<raw request body>"` keyed by your account's signing secret (`GET /dashboard/v1/webhooks/secret`, created on first read; rotate with `POST /dashboard/v1/webhooks/secret/rotate`). Verify over the exact bytes you received, compare in constant time, and reject a `t` older than five minutes:
+
+```python
+import hmac, hashlib, time
+
+def verify(secret: str, header: str, body: bytes, tolerance: int = 300) -> bool:
+    parts = dict(p.split("=", 1) for p in header.split(","))
+    t = int(parts["t"])
+    if abs(time.time() - t) > tolerance:
+        return False
+    expected = hmac.new(secret.encode(), f"{t}.".encode() + body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, parts["v1"])
+```
+
 **Important:**
-- Webhooks are **NOT authenticated** — always verify via `GET /v1/pii/{job_id}` with your API key
+- Verify the signature before trusting a payload; `GET /v1/pii/{job_id}` stays the canonical result if you ever need to re-fetch
 - Must be HTTPS (HTTP and private IPs rejected)
 - Return 2xx to confirm delivery
 - Design your endpoint for idempotency (may receive duplicates)
@@ -248,11 +263,15 @@ curl https://api.deepread.tech/v1/pii/JOB_ID \
 
 ## Rate Limits & Plans
 
-| Plan | Pages/month | Price |
-|------|-------------|-------|
-| Free | 2,000 | $0 (no credit card) |
-| Pro | 50,000 | $99/mo |
-| Scale | Custom | Custom pricing |
+PII redaction is an **Enterprise** feature; other plans receive `402` with the plan named.
+
+| Plan | Pages | Price |
+|------|-------|-------|
+| Free | 2,000 a month (resets on your signup day); no pii redaction | $0 (no credit card) |
+| Standard | No page limits; no pii redaction | Prepaid credits from $10 per 1,000 pages (Parse $10, Extract $20, Deep Extract $40) |
+| Enterprise | Custom — includes form fill, PII redaction, searchable PDF, retention, incognito, BYOK | Custom |
+
+Submits per minute: 10 Free, 100 Standard, 500 Enterprise (`429` + `Retry-After` past the limit). Pages in flight (queued + processing jobs; a form-fill job counts as one page): 16 / 200 / 500. Hard maximum for everyone: 2,000 pages or 500 MB (`413`).
 
 Response headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Used`, `X-RateLimit-Reset`
 
@@ -263,7 +282,8 @@ Response headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Use
 - **400 "Unsupported file format"** — Use PDF, TXT, PNG, or JPEG
 - **400 "Webhook URL must use HTTPS"** — Change `http://` to `https://`
 - **400 "Synthetic redaction style is not available"** — Use `black_bar`, `placeholder`, or `partial`
-- **429 quota exceeded** — Upgrade to PRO or wait for next billing cycle
+- **402 not on plan** — PII redaction is an Enterprise feature; upgrade the plan
+- **429 with `Retry-After`** — Too many submits this minute or too many pages in flight; wait and retry
 - **Status "failed"** — Check `error.code` and `error.message` in response
 
 ---
