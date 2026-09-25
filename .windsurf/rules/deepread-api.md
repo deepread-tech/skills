@@ -29,7 +29,7 @@ Never show `device_code` or `api_key` to the user.
 | `pipeline` | No | plan default | Engine: `"extract"` (one OCR pass) or `"deep-extract"` (two passes, an LLM judge, and a second read that checks each extracted field value). Default: Free/Standard `extract`, Enterprise `deep-extract`. Aliases still accepted: `fast` = extract, `standard` = deep-extract, `searchable` = deep-extract + `searchable_pdf=true`; responses show the name you sent |
 | `schema` | No | — | JSON Schema string for structured extraction |
 | `blueprint_id` | No | — | UUID (mutually exclusive with schema) |
-| `preview` | No | `"true"` | Page images + public preview link + each field located (`location.bounding_box`). Replaces `include_images` (deprecated, honoured). Free plan: no preview link or stored images, locations still returned |
+| `preview` | No | `"false"` | Page images + public preview link + each field located (`location.bounding_box`). Off unless `"true"`: the link is public. Replaces `include_images` (deprecated, honoured). Free plan: no preview link or stored images, locations still returned |
 | `per_page` | No | `"false"` | Per-page breakdown. Replaces `include_pages` (deprecated, honoured) |
 | `webhook_url` | No | — | HTTPS completion callback, signed (Standard and up; 402 on Free) |
 | `idempotency_key` | No | — | ≤255 chars, unique per account. Same key → the same job (200); same key + different file/options → 409 |
