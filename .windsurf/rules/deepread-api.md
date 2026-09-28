@@ -29,7 +29,8 @@ Never show `device_code` or `api_key` to the user.
 | `pipeline` | No | plan default | Engine: `"extract"` (one OCR pass) or `"deep-extract"` (two passes, an LLM judge, and a second read that checks each extracted field value). Default: Free/Standard `extract`, Enterprise `deep-extract`. Aliases still accepted: `fast` = extract, `standard` = deep-extract, `searchable` = deep-extract + `searchable_pdf=true`; responses show the name you sent |
 | `schema` | No | — | JSON Schema string for structured extraction |
 | `blueprint_id` | No | — | UUID (mutually exclusive with schema) |
-| `preview` | No | `"false"` | Page images + public preview link + each field located (`location.bounding_box`). Off unless `"true"`: the link is public. Replaces `include_images` (deprecated, honoured). Free plan: no preview link or stored images, locations still returned |
+| `preview` | No | `"false"` | Page images + public preview link. Off unless `"true"`: the link is public. Replaces `include_images` (deprecated, honoured). Standard and Enterprise; Free plan: no preview link or stored images. Add `include_markers` for click-to-highlight |
+| `include_markers` | No | `"false"` | `"true"` → bounding boxes: layout blocks in `grounding[]` + `location.bounding_box` per field. Both engines, every plan incl. Free. `preview` alone does not guarantee boxes |
 | `per_page` | No | `"false"` | Per-page breakdown. Replaces `include_pages` (deprecated, honoured) |
 | `webhook_url` | No | — | HTTPS completion callback, signed (Standard and up; 402 on Free) |
 | `idempotency_key` | No | — | ≤255 chars, unique per account. Same key → the same job (200); same key + different file/options → 409 |
@@ -38,7 +39,7 @@ Never show `device_code` or `api_key` to the user.
 | `retention_days` | No | — | Enterprise. integer 1–365 → document, preview artifacts and results deleted N days after submission (content absent + preview 410 from the deadline on; `data_deleted_at` confirms) |
 | `version` | No | — | Pipeline version pin |
 
-Every job reports `product`: `parse` (extract, no schema), `extract` (extract + schema/blueprint), `deep-extract` (deep-extract, schema or not). `include_markers` is deprecated but honoured as an on/off override for locating.
+Every job reports `product`: `parse` (extract, no schema), `extract` (extract + schema/blueprint), `deep-extract` (deep-extract, schema or not). Bounding boxes are returned only with `include_markers=true`.
 
 Response: `{"id": "uuid", "status": "queued"}`
 Errors: 400 (bad schema/file, Free doc over 50 pages), 401 (bad key), 402 (feature not on plan, or credits do not cover the job), 409 (idempotency key reused with a different request), 413 (over the plan file size or the hard max: 2,000 pages / 500 MB), 415 (file type not on plan), 429 (rate, pages in flight, or Free quota; `Retry-After`)

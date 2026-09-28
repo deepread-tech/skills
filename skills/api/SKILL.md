@@ -106,7 +106,8 @@ Uploads a document for async processing. Returns immediately with a job ID.
 | `pipeline` | string | No | plan default | Engine: `"extract"` (one OCR pass) or `"deep-extract"` (two OCR passes reconciled by an LLM judge, plus a second read that checks each extracted field value). Default: Free and Standard run `extract`, Enterprise runs `deep-extract`. The older names `fast`, `standard` and `searchable` still work as aliases (`fast` = `extract`, `standard` = `deep-extract`, `searchable` = `deep-extract` + `searchable_pdf=true`); a job's responses show the name you sent. |
 | `schema` | string | No | — | JSON Schema for structured extraction |
 | `blueprint_id` | string | No | — | Blueprint UUID (mutually exclusive with schema) |
-| `preview` | string | No | `"false"` | Page images, a public preview link, and each extracted field located on the page (`location.bounding_box`). Off unless you send `"true"`: anyone with the link can open the document, so it exists only on request. Replaces `include_images` (deprecated but honoured). On the Free plan the preview link and stored page images are off, but field locations are still returned. |
+| `preview` | string | No | `"false"` | Page images and a public preview link. Off unless you send `"true"`: anyone with the link can open the document, so it exists only on request. Replaces `include_images` (deprecated but honoured). Standard and Enterprise plans; on the Free plan the preview link and stored page images are off. For click-to-highlight in the preview, send `include_markers` as well. |
+| `include_markers` | string | No | `"false"` | Set `"true"` to return bounding boxes: layout blocks under top-level `grounding[]`, and `location.bounding_box` on each extracted field. Works on both engines and on every plan, Free included. Do not rely on `preview` alone to return boxes. |
 | `per_page` | string | No | `"false"` | Per-page breakdown in `pages[]`. Replaces `include_pages` (deprecated but honoured). |
 | `webhook_url` | string | No | — | HTTPS URL to notify on completion. Standard plan and up (`402` on Free). Deliveries are signed — see Webhooks. |
 | `idempotency_key` | string | No | — | Up to 255 characters, unique per account. A retry with the same key returns the job the first request created (`200`, with its current status) instead of creating and charging a second job. The same key with a different file or different options is refused with `409`. |
@@ -117,7 +118,7 @@ Uploads a document for async processing. Returns immediately with a job ID.
 
 **Note:** Provide `schema` OR `blueprint_id`, not both. Without either, only OCR text is returned.
 
-Every job reports its `product` — what it was sold as: `parse` (`extract` without a schema), `extract` (`extract` with a schema or blueprint) or `deep-extract` (the `deep-extract` engine, with or without a schema). The deprecated `include_markers` is still honoured as an explicit on/off override for field locating.
+Every job reports its `product` — what it was sold as: `parse` (`extract` without a schema), `extract` (`extract` with a schema or blueprint) or `deep-extract` (the `deep-extract` engine, with or without a schema). Bounding boxes are returned only when you send `include_markers=true`.
 
 **Response (200 OK):**
 ```json
@@ -218,7 +219,7 @@ Every response carries `"schema_version": "dp02"`.
 - `pages` is present when `per_page=true` (or the deprecated `include_pages=true`); per-page auto-detected fields are in `pages[].fields[]`
 - `document.layout` is a typed object (was the old `result.json_string` blob)
 - `artifacts.preview_url` is a shareable link (no auth needed) to the HIL review interface; not produced on the Free plan or for `incognito` jobs
-- Each extracted field carries `location.bounding_box` (0–1 fractions of page width/height, origin top-left) and `location.page`. Locating follows `preview`: off unless you send `preview=true`, always off for `incognito` jobs. On the Free plan the preview link and stored page images are off, but locations are still returned. Located layout blocks are also listed under top-level `grounding[]`. The deprecated `include_markers` is still honoured as an explicit on/off override.
+- Each extracted field carries `location.page`. It also carries `location.bounding_box` (0–1 fractions of page width/height, origin top-left) when you send `include_markers=true`, on either engine and on every plan. Do not rely on `preview=true` alone to return boxes: send both for click-to-highlight in the preview. On the Free plan the preview link and stored page images are off, but locations are still returned. Located layout blocks are also listed under top-level `grounding[]`. The deprecated `include_markers` is still honoured as an explicit on/off override.
 - `product` says what the job was sold as: `parse`, `extract` or `deep-extract`
 
 **Response (failed):**
