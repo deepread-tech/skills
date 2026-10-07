@@ -240,10 +240,10 @@ Use `schema` OR `blueprint_id`, not both.
 | Plan | Pages | Max file | Per-doc limit | Price |
 |------|-------|----------|---------------|-------|
 | Free | 2,000 a month (resets on your signup day) | 15 MB | 50 pages | $0 |
-| Standard | No page limits | 50 MB | Unlimited | Prepaid credits from $10 per 1,000 pages: Parse $10, Extract $20, Deep Extract $40 |
+| Standard | No page limits | 50 MB | Unlimited | Prepaid credits from $15 per 1,000 pages (Extract $15, Deep Extract $35) |
 | Enterprise | Custom | 500 MB | Unlimited | Custom — adds searchable PDF, retention, incognito, PII redaction, form fill, BYOK |
 
-`pipeline` picks the engine: `extract` (one OCR pass; the default on Free and Standard) or `deep-extract` (two passes, judged, with a second read that checks each field value; the default on Enterprise). Every job reports its `product`: `parse`, `extract` or `deep-extract`.
+`pipeline` picks the engine: `extract` (one OCR pass; the default on Free and Standard) or `deep-extract` (two passes, judged, with a second read that checks each field value; the default on Enterprise). Every job reports its `product`: `extract` or `deep-extract`.
 
 ---
 

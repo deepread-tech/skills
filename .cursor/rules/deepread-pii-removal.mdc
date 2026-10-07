@@ -268,7 +268,7 @@ PII redaction is an **Enterprise** feature; other plans receive `402` with the p
 | Plan | Pages | Price |
 |------|-------|-------|
 | Free | 2,000 a month (resets on your signup day); no pii redaction | $0 (no credit card) |
-| Standard | No page limits; no pii redaction | Prepaid credits from $10 per 1,000 pages (Parse $10, Extract $20, Deep Extract $40) |
+| Standard | No page limits; no pii redaction | Prepaid credits from $15 per 1,000 pages (Extract $15, Deep Extract $35) |
 | Enterprise | Custom — includes form fill, PII redaction, searchable PDF, retention, incognito, BYOK | Custom |
 
 Submits per minute: 10 Free, 100 Standard, 500 Enterprise (`429` + `Retry-After` past the limit). Pages in flight (queued + processing jobs; a form-fill job counts as one page): 16 / 200 / 500. Hard maximum for everyone: 2,000 pages or 500 MB (`413`).
