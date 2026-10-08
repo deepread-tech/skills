@@ -266,9 +266,8 @@ Lists the engines (with their aliases) and the products with list prices.
 
 | You send | Engine that runs | Product | Price / 1,000 pages |
 |----------|------------------|---------|---------------------|
-| `pipeline=extract`, no schema | one OCR pass | **Parse** — the document as Markdown with tables, layout blocks and bounding boxes | $10 |
-| `pipeline=extract` + `schema` or `blueprint_id` | one OCR pass | **Extract** — Parse plus your fields, each with a review flag and its location | $20 |
-| `pipeline=deep-extract`, with or without a schema | two OCR passes reconciled by an LLM judge, rotation correction, and a second read that checks each extracted field value (~45-60s) | **Deep Extract** | $40 |
+| `pipeline=extract`, with or without a `schema` or `blueprint_id` | one OCR pass | **Extract** — the document as Markdown with tables, layout blocks and bounding boxes, plus your fields when you send a schema, each with a review flag and its location | $15 |
+| `pipeline=deep-extract`, with or without a schema | two OCR passes reconciled by an LLM judge, rotation correction, and a second read that checks each extracted field value (~45-60s) | **Deep Extract** | $35 |
 
 Default when `pipeline` is omitted: Free and Standard run `extract`; Enterprise runs `deep-extract`. The older names still work as aliases — `fast` = `extract`, `standard` = `deep-extract`, `searchable` = `deep-extract` + `searchable_pdf=true` — and a job's responses show the name you sent. Every job reports its `product`.
 
@@ -467,7 +466,7 @@ Every response includes these headers:
 | Plan | Pages | Per document | Max file | File types | Submits/min | Pages in flight |
 |------|-------|--------------|----------|------------|-------------|-----------------|
 | Free | 2,000 a month; the counter resets on the day you signed up, unused pages do not carry over | 50 pages | 15 MB | PDF, PNG, JPEG | 10 | 16 |
-| Standard | Prepaid credits from $10 per 1,000 pages — Parse $10, Extract $20, Deep Extract $40; no page limits | — | 50 MB | + TIFF, WebP, BMP, GIF, DOCX, TXT | 100 | 200 |
+| Standard | Prepaid credits from $15 per 1,000 pages (Extract $15, Deep Extract $35); no page limits | — | 50 MB | + TIFF, WebP, BMP, GIF, DOCX, TXT | 100 | 200 |
 | Enterprise | Custom (purchase order, invoiced monthly) | — | 500 MB | + APNG, PSD, PCX, PPM, CUR, DCX, FTEX, PIXAR, DOC, DOTX, ODT, RTF, WPD, PPT, PPTX, ODP, HTML, CSV, XLSX, XLSM, XLS, XLTX, XLTM, ODS | 500 | 500 |
 
 Enterprise also has the searchable PDF, retention and incognito add-ons, PII redaction, form fill and BYOK (your own provider keys). Webhooks, blueprints and the optimizer are on Standard and up. A feature the plan lacks is refused with `402`. Pro, Scale and BYOK are legacy account names, not plans you can buy: legacy Pro has the Standard limits, legacy Scale and BYOK the Enterprise ones.
@@ -834,7 +833,7 @@ def handle_webhook():
 - **Send a document** → POST /v1/process, show code in their language
 - **Structured data** → help write a JSON Schema with descriptive field descriptions
 - **Better accuracy** → explain blueprints, help set up optimizer
-- **Pick an engine** → `extract` (one pass: Parse, or Extract with a schema) for speed and cost, `deep-extract` (judged second pass) for accuracy; `searchable_pdf=true` needs `deep-extract` on Enterprise
+- **Pick an engine** → `extract` (one pass, with or without a schema) for speed and cost, `deep-extract` (judged second pass) for accuracy; `searchable_pdf=true` needs `deep-extract` on Enterprise
 - **Real-time updates** → set up webhook_url (Standard and up), verify `X-DeepRead-Signature` in the receiver
 - **Hitting errors** → check API key, plan limits (402 feature or credits, 413 size, 415 file type, 429 rate, in-flight or quota), file format, schema validity
 - **Share results** → use `artifacts.preview_url` from response (no auth needed)

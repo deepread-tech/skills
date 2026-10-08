@@ -594,7 +594,7 @@ PII redaction is an **Enterprise** feature; other plans receive `402` with the p
 
 ### Plans
 - **Free**: 2,000 pages/month (resets on your signup day), 10 submits/minute, 16 pages in flight — OCR and extraction only, no PII redaction
-- **Standard**: prepaid credits from $10 per 1,000 pages (Parse $10, Extract $20, Deep Extract $40), no page limits, 100 submits/minute, 200 pages in flight — no PII redaction
+- **Standard**: prepaid credits from $15 per 1,000 pages (Extract $15, Deep Extract $35), no page limits, 100 submits/minute, 200 pages in flight — no PII redaction
 - **Enterprise**: custom pricing, 500 submits/minute, 500 pages in flight, 500 MB files — includes PII redaction, form fill, searchable PDF, retention, incognito, BYOK
 
 Status endpoint: 60 requests/minute. Hard maximum for everyone: 2,000 pages or 500 MB (`413`). Past a limit the answer is `429` with `Retry-After`.

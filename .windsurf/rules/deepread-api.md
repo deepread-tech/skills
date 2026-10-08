@@ -50,7 +50,7 @@ Statuses: `queued` → `processing` → `completed` | `failed`
 Completed (dp02 — every response has `schema_version: "dp02"`): `{id, status, schema_version, pipeline, product, searchable_pdf, incognito, retention_expires_at (only with retention_days, until deletion), data_deleted_at (after the retention purge), document: {page_count, content: {format, text, text_preview, text_url (>1MB)}, layout}, extraction: {fields: [{key, value, needs_review, review_reason?, location: {page, bounding_box}}]}, pages (with `per_page=true`): [{page_number, content: {format, text}, fields, needs_review}], review: {needs_review, quality_score, fields_total, fields_needing_review, review_rate, flags}, artifacts: {preview_url, searchable_pdf_url}, webhook: {url, delivered, delivered_at, error}}`
 
 **GET /v1/preview/{token}** — Auth: None. Public shareable preview.
-**GET /v1/pipelines** — Auth: None. Engines and products with prices: `extract` (one pass; Parse $10 / 1,000 pages without a schema, Extract $20 with one) | `deep-extract` (two passes, judged, verification read, ~45-60s; Deep Extract $40). Searchable PDF = `deep-extract` + `searchable_pdf=true` add-on (Enterprise; not a tier).
+**GET /v1/pipelines** — Auth: None. Engines and products with prices: `extract` (one pass, with or without a schema; Extract $15 / 1,000 pages) | `deep-extract` (two passes, judged, verification read, ~45-60s; Deep Extract $40). Searchable PDF = `deep-extract` + `searchable_pdf=true` add-on (Enterprise; not a tier).
 
 ## Blueprints & Optimizer
 
@@ -84,7 +84,7 @@ def verify(secret: str, header: str, body: bytes, tolerance: int = 300) -> bool:
 | Plan | Pages | Per doc | Max file | File types | Submits/min | Pages in flight |
 |------|-------|---------|----------|------------|-------------|-----------------|
 | Free | 2,000/month, resets on your signup day | 50 pages | 15 MB | PDF, PNG, JPEG | 10 | 16 |
-| Standard | Prepaid credits from $10 per 1,000 pages (Parse $10, Extract $20, Deep Extract $40); no page limits | — | 50 MB | + TIFF, WebP, BMP, GIF, DOCX, TXT | 100 | 200 |
+| Standard | Prepaid credits from $15 per 1,000 pages (Extract $15, Deep Extract $35); no page limits | — | 50 MB | + TIFF, WebP, BMP, GIF, DOCX, TXT | 100 | 200 |
 | Enterprise | Custom | — | 500 MB | + APNG, PSD, PCX, PPM, CUR, DCX, FTEX, PIXAR, DOC, DOTX, ODT, RTF, WPD, PPT, PPTX, ODP, HTML, CSV, XLSX, XLSM, XLS, XLTX, XLTM, ODS | 500 | 500 |
 
 Enterprise adds searchable PDF, retention, incognito, PII redaction, form fill, BYOK. Webhooks, blueprints, optimizer: Standard and up. Pro/Scale/BYOK are legacy account names, not plans. Submits over the minute → 429 + `Retry-After`. Pages in flight = pages of queued + processing jobs; over the cap → 429, `Retry-After: 30`, body `{pages_in_flight, max_pages_in_flight, pages_requested}` (admission limit, nothing queued). Hard max for everyone: 2,000 pages / 500 MB → 413. File type not on plan → 415 naming the plan. Polling GET /v1/jobs: Free 20/min, Standard 60, Enterprise 150. Retry safely with `idempotency_key`.
