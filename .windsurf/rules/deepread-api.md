@@ -50,7 +50,7 @@ Statuses: `queued` → `processing` → `completed` | `failed`
 Completed (dp02 — every response has `schema_version: "dp02"`): `{id, status, schema_version, pipeline, product, searchable_pdf, incognito, retention_expires_at (only with retention_days, until deletion), data_deleted_at (after the retention purge), document: {page_count, content: {format, text, text_preview, text_url (>1MB)}, layout}, extraction: {fields: [{key, value, needs_review, review_reason?, location: {page, bounding_box}}]}, pages (with `per_page=true`): [{page_number, content: {format, text}, fields, needs_review}], review: {needs_review, quality_score, fields_total, fields_needing_review, review_rate, flags}, artifacts: {preview_url, searchable_pdf_url}, webhook: {url, delivered, delivered_at, error}}`
 
 **GET /v1/preview/{token}** — Auth: None. Public shareable preview.
-**GET /v1/pipelines** — Auth: None. Engines and products with prices: `extract` (one pass, with or without a schema; Extract $15 / 1,000 pages) | `deep-extract` (two passes, judged, verification read, ~45-60s; Deep Extract $40). Searchable PDF = `deep-extract` + `searchable_pdf=true` add-on (Enterprise; not a tier).
+**GET /v1/pipelines** — Auth: None. Engines and products with prices: `extract` (one pass, with or without a schema; Extract $15 / 1,000 pages) | `deep-extract` (two passes, judged, verification read, ~45-60s; Deep Extract $35). Searchable PDF = `deep-extract` + `searchable_pdf=true` add-on (Enterprise; not a tier).
 
 ## Blueprints & Optimizer
 
