@@ -1,7 +1,7 @@
 ---
 name: deepread-tax-forms
 title: DeepRead Tax Forms
-description: Extract structured data from W-2s, 1099s, 1040s, and other tax forms — employer/payer, recipient, wages, withholdings, box-by-box amounts — as typed JSON. Works on PDFs and scans. Per-field confidence flags. PII redaction built in. Free 2,000 pages/month.
+description: Extract structured data from W-2s, 1099s, 1040s, and other tax forms — employer/payer, recipient, wages, withholdings, box-by-box amounts — as typed JSON. Works on PDFs and scans. Per-field review flags. PII redaction (Enterprise plans). Free 2,000 pages/month.
 metadata: {"openclaw":{"requires":{"env":["DEEPREAD_API_KEY"]},"primaryEnv":"DEEPREAD_API_KEY","homepage":"https://www.deepread.tech"}}
 ---
 
@@ -94,7 +94,7 @@ Install: `clawhub install uday390/deepread-pii`
 ## Tips
 
 - **Name each box explicitly** ("Box 1 — wages…") — far better than "wages".
-- **Recurring form type?** Build a blueprint at `https://www.deepread.tech/dashboard/optimizer` for a 20–30% accuracy lift.
+- **Recurring form type?** Build a blueprint at `https://www.deepread.tech/dashboard/optimizer` to raise accuracy on your documents.
 - **Check `needs_review`** — only flagged boxes need a human.
 
 ## Related DeepRead Skills

@@ -1,6 +1,6 @@
 {
   "name": "deepread",
-  "description": "DeepRead OCR — extract text and structured data from PDFs and images with 97%+ accuracy. Includes setup, API reference, PII redaction, form filling, and BYOK.",
+  "description": "DeepRead OCR — extract text and structured data from PDFs and images. Includes setup, API reference, PII redaction, form filling, and BYOK.",
   "version": "3.0.0",
   "author": {
     "name": "DeepRead Technologies",

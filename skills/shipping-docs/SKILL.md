@@ -1,7 +1,7 @@
 ---
 name: deepread-shipping-docs
 title: DeepRead Shipping Documents
-description: Extract structured data from bills of lading, packing lists, and shipping manifests — shipper, consignee, carrier, tracking, containers, line items, weights — as typed JSON. Works on PDFs and scans. Per-field confidence flags. Free 2,000 pages/month.
+description: Extract structured data from bills of lading, packing lists, and shipping manifests — shipper, consignee, carrier, tracking, containers, line items, weights — as typed JSON. Works on PDFs and scans. Per-field review flags. Free 2,000 pages/month.
 metadata: {"openclaw":{"requires":{"env":["DEEPREAD_API_KEY"]},"primaryEnv":"DEEPREAD_API_KEY","homepage":"https://www.deepread.tech"}}
 ---
 

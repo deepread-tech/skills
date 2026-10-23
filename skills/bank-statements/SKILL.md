@@ -1,7 +1,7 @@
 ---
 name: deepread-bank-statements
 title: DeepRead Bank Statements
-description: Extract structured data from bank statements — account holder, period, opening/closing balances, and every transaction as typed JSON. Works on PDF and scanned statements from any bank. Per-field confidence flags. PII redaction for compliant sharing. Free 2,000 pages/month.
+description: Extract structured data from bank statements — account holder, period, opening/closing balances, and every transaction as typed JSON. Works on PDF and scanned statements from any bank. Per-field review flags. PII redaction for compliant sharing (Enterprise plans). Free 2,000 pages/month.
 metadata: {"openclaw":{"requires":{"env":["DEEPREAD_API_KEY"]},"primaryEnv":"DEEPREAD_API_KEY","homepage":"https://www.deepread.tech"}}
 ---
 
@@ -13,7 +13,7 @@ Turn any bank statement — PDF export or scanned/photographed — into clean, t
 
 ## Why this is hard (and why DeepRead handles it)
 
-Bank statements are the worst of OCR: dense tables, multi-page transaction runs, inconsistent layouts across thousands of banks, credits and debits in separate columns, and running balances that have to reconcile. A single-model OCR pass silently drops rows or flips a debit into a credit. DeepRead runs **multi-model consensus** (GPT + Gemini + an LLM judge), returns a confidence flag per field, and lets you reconcile against the stated opening/closing balances.
+Bank statements are the worst of OCR: dense tables, multi-page transaction runs, inconsistent layouts across thousands of banks, credits and debits in separate columns, and running balances that have to reconcile. A single-model OCR pass silently drops rows or flips a debit into a credit. DeepRead's Deep Extract engine runs **two OCR passes reconciled by an LLM judge**, returns a review flag per field, and lets you reconcile against the stated opening/closing balances.
 
 ## What You Get Back
 
@@ -171,7 +171,7 @@ curl -s -X POST https://api.deepread.tech/v1/process \
 
 ## Reconciliation: your built-in accuracy check
 
-Bank statements have a property most documents don't: they **must** balance. `opening_balance + Σ(transaction amounts) == closing_balance`. Always run this check (see the Python example). If it doesn't reconcile, a row was misread — combine it with the `needs_review` flags to find exactly which line to fix. This turns "97% accurate" into "provably correct or flagged."
+Bank statements have a property most documents don't: they **must** balance. `opening_balance + Σ(transaction amounts) == closing_balance`. Always run this check (see the Python example). If it doesn't reconcile, a row was misread — combine it with the `needs_review` flags to find exactly which line to fix. This turns "probably right" into "provably correct or flagged."
 
 ## Use Cases
 
@@ -179,7 +179,7 @@ Bank statements have a property most documents don't: they **must** balance. `op
 - **Accounting & bookkeeping** — import transactions into QuickBooks/Xero without manual keying
 - **Personal finance apps** — onboard users by statement upload instead of fragile bank screen-scraping
 - **Cash-flow analysis** — categorize and trend transactions across months
-- **Audit & forensics** — extract and reconcile statements at scale with confidence flags
+- **Audit & forensics** — extract and reconcile statements at scale with review flags
 
 ## Compliant Sharing — Redact First
 
@@ -197,13 +197,13 @@ Install it: `clawhub install uday390/deepread-pii`
 
 - **Always reconcile** opening + transactions == closing (shown above) — it's free verification.
 - **Use signed amounts** (negative for debits) so reconciliation math just works.
-- **Recurring bank/format?** Turn this schema into a blueprint at `https://www.deepread.tech/dashboard/optimizer` for a 20–30% accuracy lift on that bank's layout.
+- **Recurring bank/format?** Turn this schema into a blueprint at `https://www.deepread.tech/dashboard/optimizer` to raise accuracy on that bank's layout.
 - **Multi-page statements** are handled automatically; transactions come back in document order.
 - **Check `needs_review`** — only flagged fields need a human; the rest auto-process.
 
-## BYOK — Zero Processing Costs
+## BYOK
 
-Connect your own OpenAI, Google, or OpenRouter key in the dashboard. All processing routes through your provider — zero DeepRead LLM costs, page quota skipped. Set it up: https://www.deepread.tech/dashboard/byok
+Bring your own OpenAI, Google, or OpenRouter key so the LLM calls run on your provider account. BYOK is an Enterprise feature: https://www.deepread.tech/dashboard/byok
 
 ## Related DeepRead Skills
 
@@ -215,7 +215,7 @@ Connect your own OpenAI, Google, or OpenRouter key in the dashboard. All process
 ## Support
 
 - **Dashboard**: https://www.deepread.tech/dashboard
-- **Issues**: https://github.com/deepread-tech/deep-read-service/issues
+- **Issues**: https://github.com/deepread-tech/deepread-community/issues
 - **Email**: support@deepread.tech
 
 ---

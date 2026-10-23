@@ -1,7 +1,7 @@
 ---
 name: deepread-insurance
 title: DeepRead Insurance Documents
-description: Extract structured data from insurance claims, policies, EOBs, and loss reports. Pre-built schemas for claimant info, coverage, damages, adjuster notes. PII redaction for compliant sharing. 97%+ accuracy. Free 2,000 pages/month.
+description: Extract structured data from insurance claims, policies, EOBs, and loss reports. Pre-built schemas for claimant info, coverage, damages, adjuster notes. PII redaction for compliant sharing (Enterprise plans). Free 2,000 pages/month.
 metadata: {"openclaw":{"requires":{"env":["DEEPREAD_API_KEY"]},"primaryEnv":"DEEPREAD_API_KEY","homepage":"https://www.deepread.tech"}}
 ---
 
@@ -45,7 +45,7 @@ Submit a claim form and get structured JSON. Extracted fields come back as a lis
 }
 ```
 
-Fields with `needs_review: true` need human review (check `review_reason`). Everything else is high-confidence.
+Fields with `needs_review: true` need human review (check `review_reason`). Everything else was not flagged.
 
 ## Setup
 
@@ -235,14 +235,12 @@ while True:
 
 - **Specify claim-specific field names** — Using "Claim number or reference ID" works better than just "number"
 - **Include status values** — Adding expected statuses (Filed, Under Review, Approved, Denied) in descriptions helps extraction
-- **Create blueprints for recurring form types** — If you process the same carrier's claim forms repeatedly, train a blueprint at deepread.tech/dashboard/optimizer for 20-30% improvement
+- **Create blueprints for recurring form types** — If you process the same carrier's claim forms repeatedly, train a blueprint at deepread.tech/dashboard/optimizer to raise accuracy
 - **Always redact before external sharing** — Use PII redaction before sending to contractors, adjusters, or legal teams
 
-## BYOK — Zero Processing Costs
+## BYOK
 
-Connect your own OpenAI, Google, or OpenRouter key via the dashboard. All document processing routes through your provider — zero DeepRead LLM costs, page quota skipped.
-
-Set it up: https://www.deepread.tech/dashboard/byok
+Bring your own OpenAI, Google, or OpenRouter key so the LLM calls run on your provider account. BYOK is an Enterprise feature: https://www.deepread.tech/dashboard/byok
 
 ## Related DeepRead Skills
 
@@ -260,7 +258,7 @@ Set it up: https://www.deepread.tech/dashboard/byok
 - **Dashboard**: https://www.deepread.tech/dashboard
 - **Demo Repo**: https://github.com/deepread-tech/deepread-demo
 - **n8n Node**: https://www.npmjs.com/package/n8n-nodes-deepread
-- **Issues**: https://github.com/deepread-tech/deep-read-service/issues
+- **Issues**: https://github.com/deepread-tech/deepread-community/issues
 - **Email**: support@deepread.tech
 
 ---

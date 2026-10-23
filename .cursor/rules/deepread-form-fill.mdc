@@ -29,7 +29,7 @@ Upload any PDF form + your data as JSON. AI detects fields visually, maps your d
 |-----------|------|----------|---------|-------------|
 | `file` | File | Yes | — | PDF form to fill |
 | `form_fields` | JSON string | Yes | — | `{"field_name": "value"}` — your data to fill |
-| `webhook_url` | string | No | — | HTTPS URL to notify on completion |
+| `webhook_url` | string | No | — | Public http(s) URL to notify on completion (no localhost, private or internal addresses) |
 | `idempotency_key` | string | No | — | Prevent duplicate submissions |
 | `url_expires_in` | integer | No | `604800` | Signed URL expiry in seconds (min: 3600, max: 604800 = 7 days) |
 
@@ -57,7 +57,7 @@ Processing is **asynchronous** — poll the GET endpoint or use a webhook.
 ## GET /v1/form-fill/{job_id} — Get Job Status & Results
 
 **Auth:** `X-API-Key: YOUR_KEY`
-**Rate limit:** 20 requests per 60 seconds
+**Rate limit:** polling is 20 a minute on Free, 60 on Standard, 150 on Enterprise (form fill itself is an Enterprise feature)
 
 Poll every 5-10 seconds until `status` is `completed` or `failed`.
 
@@ -187,7 +187,7 @@ def verify(secret: str, header: str, body: bytes, tolerance: int = 300) -> bool:
 
 **Important:**
 - Verify the signature before trusting a payload; `GET /v1/form-fill/{job_id}` stays the canonical result if you ever need to re-fetch
-- Must be HTTPS
+- Must be a public http(s) URL (localhost, private and internal addresses are refused)
 - Return 2xx to confirm delivery
 - Design your endpoint for idempotency (may receive duplicates)
 
@@ -303,14 +303,14 @@ if result["status"] == "completed":
 ### JavaScript / Node.js
 
 ```javascript
-import fs from "fs";
+import fs from "node:fs";
 
 const API_KEY = "sk_live_YOUR_KEY";
 const BASE = "https://api.deepread.tech";
 
 // Submit form + data
 const form = new FormData();
-form.append("file", fs.createReadStream("application.pdf"));
+form.append("file", new Blob([fs.readFileSync("application.pdf")]), "application.pdf");
 form.append("form_fields", JSON.stringify({
   full_name: "Jane Doe",
   date_of_birth: "03/15/1990",

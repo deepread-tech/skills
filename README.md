@@ -8,10 +8,10 @@ Install these skills and your AI coding assistant instantly knows how to integra
 
 | Skill | What it does |
 |-------|-------------|
-| `/setup` | Get started — signup, API key, first request, structured extraction, blueprints |
-| `/api` | Full API reference — all endpoints, auth, schemas, blueprints, webhooks, code examples |
-| `/form-fill` | Fill PDF forms — submit form + JSON data, get back completed PDF with quality report |
-| `/pii-removal` | PII removal — upload documents, detect and redact personal information, download clean files |
+| `/deepread-setup` | Get started — signup, API key, first request, structured extraction, blueprints |
+| `/deepread-api` | Full API reference — all endpoints, auth, schemas, blueprints, webhooks, code examples |
+| `/deepread-form-fill` | Fill PDF forms — submit form + JSON data, get back completed PDF with quality report |
+| `/deepread-pii` | PII removal (Enterprise plans) — upload documents, detect and redact personal information, download clean files |
 
 ## Install
 
@@ -24,10 +24,10 @@ npx skills add deepread-tech/skills
 After installing, use the slash commands:
 
 ```
-/setup      # walks you through signup, API key, and first request
-/api        # full API reference — your agent can write integration code in any language
-/form-fill      # fill PDF forms with AI — any PDF, no AcroForm needed
-/pii-removal   # detect and redact PII from documents
+/deepread-setup      # walks you through signup, API key, and first request
+/deepread-api        # full API reference — your agent can write integration code in any language
+/deepread-form-fill  # fill PDF forms with AI — any PDF, no AcroForm needed
+/deepread-pii        # detect and redact PII from documents
 ```
 
 ### Cursor
@@ -57,23 +57,26 @@ Or manually copy `.windsurf/rules/deepread-setup.md`, `.windsurf/rules/deepread-
 ### Clawhub (OpenClaw Registry)
 
 ```bash
-clawhub add deepread-tech/deepread-ocr
+clawhub install uday390/deepread-ocr
 ```
 
-The skills are published to the OpenClaw registry as `user-invocable` commands. Use `/setup`, `/api`, `/form-fill`, and `/pii-removal` after installation.
+The skills are published to the OpenClaw registry as `user-invocable` commands. Use `/deepread-setup`, `/deepread-api`, `/deepread-form-fill`, and `/deepread-pii` after installation.
 
 ## What is DeepRead
 
-AI-native document processing API. Upload a PDF or image, get back extracted text and structured data. Multi-model consensus pipelines deliver 97%+ accuracy and flag uncertain fields for human review.
+AI-native document processing API. Upload a PDF or image, get back extracted text and structured data. Two engines: Extract (one OCR pass) and Deep Extract (two OCR passes and an LLM judge). Both flag uncertain fields for human review; accuracy is measured on public benchmarks at deepread.tech/benchmarks.
 
 **Key features:**
-- **OCR** — Structured extraction via JSON Schema with 97%+ accuracy
+- **OCR** — Structured extraction via JSON Schema
 - **Form Fill** — AI-powered PDF form filling with visual QA
-- **PII Removal** — Detect and redact 14 types of personal information
-- Blueprints — optimized reusable schemas with 20-30% accuracy improvement
-- Per-field confidence flags (`needs_review`) for human-in-the-loop review
+- **PII Removal** — Detect and redact 14 types of personal information (Enterprise plans)
+- Blueprints — optimized reusable schemas
+- Per-field review flags (`needs_review` + `review_reason`) for human-in-the-loop review
+- Human review in DeepRead — send `reviewer_email` and a person checks and corrects the result
 - Webhook notifications
 - Shareable preview links (no auth needed)
+
+**Pricing:** Extract $15 and Deep Extract $35 per 1,000 pages; the Free plan includes 2,000 pages a month.
 
 **Links:**
 - Dashboard: `https://www.deepread.tech/dashboard`

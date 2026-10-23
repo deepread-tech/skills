@@ -1,6 +1,6 @@
 # Setup DeepRead
 
-AI-native OCR API — extracts text and structured data from PDFs/images with 97%+ accuracy.
+AI-native OCR API — extracts text and structured data from PDFs/images.
 
 **API:** `https://api.deepread.tech` | **Dashboard:** `https://www.deepread.tech`
 
@@ -149,7 +149,7 @@ Each field comes back in a list under `extraction.fields[]` with quality metadat
 ```
 `needs_review: false` = auto-accept. `needs_review: true` = needs human review (check `review_reason`).
 
-## Step 4: Blueprints (20-30% Better Accuracy)
+## Step 4: Blueprints (Better Accuracy)
 
 Optimized schemas built from your sample documents + ground truth data.
 
@@ -169,8 +169,8 @@ Use `schema` OR `blueprint_id`, not both.
 | Plan | Pages | Max file | Per-doc limit | Price |
 |------|-------|----------|---------------|-------|
 | Free | 2,000 a month (resets on your signup day) | 15 MB | 50 pages | $0 |
-| Standard | No page limits | 50 MB | Unlimited | Prepaid credits from $15 per 1,000 pages (Extract $15, Deep Extract $35) |
-| Enterprise | Custom | 500 MB | Unlimited | Custom — adds searchable PDF, retention, incognito, PII redaction, form fill, BYOK |
+| Standard | No monthly page allowance | 50 MB | 1,000 pages | Prepaid credits from $15 per 1,000 pages (Extract $15, Deep Extract $35) |
+| Enterprise | Custom | 500 MB | 2,000 pages | Custom — adds searchable PDF, retention, incognito, PII redaction, form fill, BYOK |
 
 `pipeline` picks the engine: `extract` (one OCR pass; the default on Free and Standard) or `deep-extract` (two passes, judged, with a second read that checks each field value; the default on Enterprise). Every job reports its `product`: `extract` or `deep-extract`.
 

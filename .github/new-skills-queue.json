@@ -5,43 +5,43 @@
       "folder": "bank-statements",
       "slug": "deepread-bank-statements",
       "name": "DeepRead Bank Statements",
-      "changelog": "Extract account holder, period, balances, and every transaction from bank statements as typed JSON. Built-in reconciliation check, per-field confidence flags, PII redaction for compliant sharing."
+      "changelog": "Extract account holder, period, balances, and every transaction from bank statements as typed JSON. Built-in reconciliation check, per-field review flags, PII redaction for compliant sharing (Enterprise plans)."
     },
     {
       "folder": "resume-parser",
       "slug": "deepread-resume-parser",
       "name": "DeepRead Resume Parser",
-      "changelog": "Parse resumes/CVs into structured JSON — contact, work history, education, skills, years of experience. Handles any layout. Per-field confidence flags. PII redaction for bias-free screening."
+      "changelog": "Parse resumes/CVs into structured JSON — contact, work history, education, skills, years of experience. Handles any layout. Per-field review flags. PII redaction for bias-free screening (Enterprise plans)."
     },
     {
       "folder": "tax-forms",
       "slug": "deepread-tax-forms",
       "name": "DeepRead Tax Forms",
-      "changelog": "Extract W-2s, 1099s, and 1040s into typed JSON — employer/payer, recipient, wages, withholdings, box-by-box amounts. Per-field confidence flags. PII redaction built in."
+      "changelog": "Extract W-2s, 1099s, and 1040s into typed JSON — employer/payer, recipient, wages, withholdings, box-by-box amounts. Per-field review flags. PII redaction (Enterprise plans)."
     },
     {
       "folder": "purchase-orders",
       "slug": "deepread-purchase-orders",
       "name": "DeepRead Purchase Orders",
-      "changelog": "Extract PO number, buyer/supplier, line items, quantities, prices, delivery dates, and totals as typed JSON. Includes 2-way PO/invoice matching. Per-field confidence flags."
+      "changelog": "Extract PO number, buyer/supplier, line items, quantities, prices, delivery dates, and totals as typed JSON. Includes 2-way PO/invoice matching. Per-field review flags."
     },
     {
       "folder": "pay-stubs",
       "slug": "deepread-pay-stubs",
       "name": "DeepRead Pay Stubs",
-      "changelog": "Extract employer, employee, pay period, gross/net pay, deductions, and YTD totals from pay stubs. Income-verification ready with annualization helper. PII redaction built in."
+      "changelog": "Extract employer, employee, pay period, gross/net pay, deductions, and YTD totals from pay stubs. Income-verification ready with annualization helper. PII redaction (Enterprise plans)."
     },
     {
       "folder": "shipping-docs",
       "slug": "deepread-shipping-docs",
       "name": "DeepRead Shipping Documents",
-      "changelog": "Extract shipper, consignee, carrier, BOL/tracking, containers, and itemized contents with weights from bills of lading and packing lists. Per-field confidence flags."
+      "changelog": "Extract shipper, consignee, carrier, BOL/tracking, containers, and itemized contents with weights from bills of lading and packing lists. Per-field review flags."
     },
     {
       "folder": "id-documents",
       "slug": "deepread-id-documents",
       "name": "DeepRead ID Documents",
-      "changelog": "Extract name, document number, dates, and nationality from passports, licenses, and national IDs for KYC/onboarding. Expiry checks, per-field confidence flags, PII redaction for compliant storage."
+      "changelog": "Extract name, document number, dates, and nationality from passports, licenses, and national IDs for KYC/onboarding. Expiry checks, per-field review flags, PII redaction for compliant storage (Enterprise plans)."
     }
   ]
 }

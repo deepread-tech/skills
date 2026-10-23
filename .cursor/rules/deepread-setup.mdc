@@ -5,7 +5,7 @@ alwaysApply: false
 
 # Setup DeepRead
 
-You are an AI agent helping a developer get started with DeepRead — an AI-native OCR API that extracts text and structured data from documents (PDFs, images) with 97%+ accuracy.
+You are an AI agent helping a developer get started with DeepRead — an AI-native OCR API that extracts text and structured data from documents (PDFs, images).
 
 **API:** `https://api.deepread.tech`
 **Dashboard:** `https://www.deepread.tech`
@@ -217,7 +217,7 @@ Extracted fields come back as a list under `extraction.fields[]`, each with qual
 
 ## Step 4: Blueprints (Better Accuracy)
 
-Blueprints are optimized schemas that improve accuracy by 20-30%. You give DeepRead sample documents + expected values, it enhances field descriptions automatically.
+Blueprints are optimized schemas. You give DeepRead sample documents + expected values, it enhances field descriptions automatically.
 
 1. Go to `https://www.deepread.tech/dashboard/optimizer`
 2. Upload 4+ sample docs + ground truth JSON
@@ -240,8 +240,8 @@ Use `schema` OR `blueprint_id`, not both.
 | Plan | Pages | Max file | Per-doc limit | Price |
 |------|-------|----------|---------------|-------|
 | Free | 2,000 a month (resets on your signup day) | 15 MB | 50 pages | $0 |
-| Standard | No page limits | 50 MB | Unlimited | Prepaid credits from $15 per 1,000 pages (Extract $15, Deep Extract $35) |
-| Enterprise | Custom | 500 MB | Unlimited | Custom — adds searchable PDF, retention, incognito, PII redaction, form fill, BYOK |
+| Standard | No monthly page allowance | 50 MB | 1,000 pages | Prepaid credits from $15 per 1,000 pages (Extract $15, Deep Extract $35) |
+| Enterprise | Custom | 500 MB | 2,000 pages | Custom — adds searchable PDF, retention, incognito, PII redaction, form fill, BYOK |
 
 `pipeline` picks the engine: `extract` (one OCR pass; the default on Free and Standard) or `deep-extract` (two passes, judged, with a second read that checks each field value; the default on Enterprise). Every job reports its `product`: `extract` or `deep-extract`.
 

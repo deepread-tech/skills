@@ -101,9 +101,9 @@ if r["status"] == "completed":
 
 ### JavaScript
 ```javascript
-import fs from "fs";
+import fs from "node:fs";
 const form = new FormData();
-form.append("file", fs.createReadStream("contract.pdf"));
+form.append("file", new Blob([fs.readFileSync("contract.pdf")]), "contract.pdf");
 form.append("redaction_style", "black_bar");
 const {id:jobId} = await fetch("https://api.deepread.tech/v1/pii/redact",
   {method:"POST", headers:{"X-API-Key":"sk_live_YOUR_KEY"}, body:form}).then(r=>r.json());

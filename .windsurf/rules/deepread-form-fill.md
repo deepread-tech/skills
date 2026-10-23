@@ -18,14 +18,14 @@ Upload any PDF form + your data as JSON. AI detects fields visually, maps your d
 |-------|-----|---------|-------------|
 | `file` | Yes | — | PDF form to fill |
 | `form_fields` | Yes | — | JSON string: `{"field_name": "value"}` |
-| `webhook_url` | No | — | HTTPS completion callback |
+| `webhook_url` | No | — | Public http(s) completion callback (no localhost/private/internal) |
 | `idempotency_key` | No | — | Prevent duplicate submissions |
 | `url_expires_in` | No | `604800` | Signed URL expiry in seconds (min: 3600, max: 604800 = 7 days) |
 
 Response: `{"id": "uuid", "status": "queued"}`
 Errors: 400 (bad JSON/file), 401 (bad key), 402 (form fill not on plan — Enterprise — or credits do not cover the job), 413 (over 2,000 pages / 500 MB), 429 (rate or pages in flight; `Retry-After`)
 
-**GET /v1/form-fill/{job_id}** — Auth: `X-API-Key`. Rate limit: 20 req/60s. Poll: 5-10s intervals.
+**GET /v1/form-fill/{job_id}** — Auth: `X-API-Key`. Polling: 20/min Free, 60 Standard, 150 Enterprise. Poll: 5-10s intervals.
 Statuses: `queued` -> `processing` -> `completed` | `failed`
 
 Completed: `{status, file_name, filled_form_url, fields_detected, fields_filled, fields_verified, fields_hil_flagged, duration_seconds, report: {summary, fields: [{field_index, label, field_type, page, value, hil_flag, verified, reason?}], mappings: [{user_key, field_index, value_to_fill, confidence}], unmapped_user_keys, adjustments_made, qa_feedback, errors}}`
@@ -103,9 +103,9 @@ if r["status"] == "completed":
 
 ### JavaScript
 ```javascript
-import fs from "fs";
+import fs from "node:fs";
 const form = new FormData();
-form.append("file", fs.createReadStream("application.pdf"));
+form.append("file", new Blob([fs.readFileSync("application.pdf")]), "application.pdf");
 form.append("form_fields", JSON.stringify({full_name:"Jane Doe",date_of_birth:"03/15/1990"}));
 const {id:jobId} = await fetch("https://api.deepread.tech/v1/form-fill",
   {method:"POST", headers:{"X-API-Key":"sk_live_YOUR_KEY"}, body:form}).then(r=>r.json());

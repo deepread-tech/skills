@@ -5,13 +5,13 @@
     "email": "support@deepread.tech"
   },
   "metadata": {
-    "description": "DeepRead — AI-native document processing API. OCR, structured extraction, PDF form filling, PII redaction, and BYOK. 97%+ accuracy via multi-model consensus. Pre-built schemas for invoices, medical records, legal contracts, and insurance claims.",
+    "description": "DeepRead — AI-native document processing API. OCR, structured extraction, PDF form filling, PII redaction, and BYOK. Two engines: Extract (one OCR pass) and Deep Extract (two OCR passes and an LLM judge). Pre-built schemas for invoices, medical records, legal contracts, and insurance claims.",
     "version": "4.0.0"
   },
   "plugins": [
     {
       "name": "deepread",
-      "description": "DeepRead — AI-native document processing API with 97%+ accuracy. Extract text and structured data from PDFs and images, fill PDF forms with AI vision, redact 14 types of PII (HIPAA/GDPR ready), and Bring Your Own Key for zero LLM costs. Includes pre-built schemas for invoices, medical records, legal contracts, and insurance claims. Free 2,000 pages/month.",
+      "description": "DeepRead — AI-native document processing API. Extract text and structured data from PDFs and images, fill PDF forms with AI vision, redact 14 types of PII (HIPAA/GDPR ready), and bring your own LLM key on Enterprise. Includes pre-built schemas for invoices, medical records, legal contracts, and insurance claims. Free 2,000 pages/month.",
       "version": "4.0.0",
       "source": "./",
       "homepage": "https://www.deepread.tech",

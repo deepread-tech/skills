@@ -47,7 +47,7 @@ Uploads a PDF form + JSON data for async processing. Returns immediately with a 
 |-----------|------|----------|-------------|
 | `file` | File | Yes | PDF form to fill |
 | `form_fields` | JSON string | Yes | `{"field_name": "value"}` — your data to fill into the form |
-| `webhook_url` | string | No | HTTPS URL to receive results when done |
+| `webhook_url` | string | No | Public http(s) URL to receive results when done (no localhost, private or internal addresses) |
 | `idempotency_key` | string | No | Prevent duplicate submissions (same key = same job) |
 | `url_expires_in` | integer | No | Signed URL expiry in seconds (default: 604800 = 7 days, min: 3600, max: 604800) |
 
@@ -75,7 +75,7 @@ Uploads a PDF form + JSON data for async processing. Returns immediately with a 
 Poll until `status` is `completed` or `failed`. Recommended: poll every 5-10 seconds, processing takes 15-30 seconds.
 
 **Auth:** `X-API-Key: YOUR_KEY`
-**Rate limit:** 20 requests per 60 seconds
+**Rate limit:** polling is 20 a minute on Free, 60 on Standard, 150 on Enterprise (form fill itself is an Enterprise feature)
 
 **Response (completed):**
 ```json
@@ -232,7 +232,7 @@ def verify(secret: str, header: str, body: bytes, tolerance: int = 300) -> bool:
 
 **Important:**
 - Verify the signature before trusting a payload; `GET /v1/form-fill/{job_id}` stays the canonical result if you ever need to re-fetch
-- Must be HTTPS
+- Must be a public http(s) URL (localhost, private and internal addresses are refused)
 - Return 2xx to confirm delivery
 - Make your endpoint idempotent (may receive duplicates)
 
@@ -334,14 +334,14 @@ else:
 ### JavaScript / Node.js
 
 ```javascript
-import fs from "fs";
+import fs from "node:fs";
 
 const API_KEY = "sk_live_YOUR_KEY";
 const BASE = "https://api.deepread.tech";
 
 // Submit form + data
 const form = new FormData();
-form.append("file", fs.createReadStream("application.pdf"));
+form.append("file", new Blob([fs.readFileSync("application.pdf")]), "application.pdf");
 form.append("form_fields", JSON.stringify({
   full_name: "Jane Doe",
   date_of_birth: "03/15/1990",

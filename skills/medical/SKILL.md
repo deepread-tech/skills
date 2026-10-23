@@ -1,7 +1,7 @@
 ---
 name: deepread-medical
 title: DeepRead Medical Records
-description: Extract structured data from medical records, lab reports, prescriptions, and clinical documents. Pre-built schemas for patient info, diagnoses, medications, vitals. PII redaction for HIPAA compliance. 97%+ accuracy. Free 2,000 pages/month.
+description: Extract structured data from medical records, lab reports, prescriptions, and clinical documents. Pre-built schemas for patient info, diagnoses, medications, vitals. PII redaction for HIPAA compliance (Enterprise plans). Free 2,000 pages/month.
 metadata: {"openclaw":{"requires":{"env":["DEEPREAD_API_KEY"]},"primaryEnv":"DEEPREAD_API_KEY","homepage":"https://www.deepread.tech"}}
 ---
 
@@ -46,7 +46,7 @@ Submit a medical record and get structured JSON. Extracted fields come back as a
 }
 ```
 
-Fields with `needs_review: true` need human review (check `review_reason`). Everything else is high-confidence.
+Fields with `needs_review: true` need human review (check `review_reason`). Everything else was not flagged.
 
 ## Setup
 
@@ -309,14 +309,12 @@ DeepRead's PII redaction is context-aware for medical documents:
 
 - **Use ICD-10/CPT code descriptions** — Adding "ICD-10 diagnosis code if present" in the schema description helps the model recognize code formats
 - **Specify units** — "Temperature in Fahrenheit" or "Weight with unit (lbs or kg)" reduces ambiguity
-- **Create blueprints for recurring form types** — If you process the same lab report format repeatedly, train a blueprint at deepread.tech/dashboard/optimizer for 20-30% improvement
+- **Create blueprints for recurring form types** — If you process the same lab report format repeatedly, train a blueprint at deepread.tech/dashboard/optimizer to raise accuracy
 - **Always redact before sharing** — Use the PII redaction endpoint before sending documents to LLMs, external systems, or non-clinical staff
 
-## BYOK — Zero Processing Costs
+## BYOK
 
-Connect your own OpenAI, Google, or OpenRouter key via the dashboard. All document processing routes through your provider — zero DeepRead LLM costs, page quota skipped.
-
-Set it up: https://www.deepread.tech/dashboard/byok
+Bring your own OpenAI, Google, or OpenRouter key so the LLM calls run on your provider account. BYOK is an Enterprise feature: https://www.deepread.tech/dashboard/byok
 
 ## Related DeepRead Skills
 
@@ -331,7 +329,7 @@ Set it up: https://www.deepread.tech/dashboard/byok
 
 - **Dashboard**: https://www.deepread.tech/dashboard
 - **Demo Repo**: https://github.com/deepread-tech/deepread-demo
-- **Issues**: https://github.com/deepread-tech/deep-read-service/issues
+- **Issues**: https://github.com/deepread-tech/deepread-community/issues
 - **Email**: support@deepread.tech
 
 ---

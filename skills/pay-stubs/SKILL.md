@@ -1,7 +1,7 @@
 ---
 name: deepread-pay-stubs
 title: DeepRead Pay Stubs
-description: Extract structured data from pay stubs and earnings statements — employer, employee, pay period, gross/net pay, taxes, deductions, and YTD totals — as typed JSON. Ideal for income verification and lending. Per-field confidence flags. PII redaction built in. Free 2,000 pages/month.
+description: Extract structured data from pay stubs and earnings statements — employer, employee, pay period, gross/net pay, taxes, deductions, and YTD totals — as typed JSON. Ideal for income verification and lending. Per-field review flags. PII redaction (Enterprise plans). Free 2,000 pages/month.
 metadata: {"openclaw":{"requires":{"env":["DEEPREAD_API_KEY"]},"primaryEnv":"DEEPREAD_API_KEY","homepage":"https://www.deepread.tech"}}
 ---
 

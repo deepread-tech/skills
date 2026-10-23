@@ -1,7 +1,7 @@
 ---
 name: deepread-resume-parser
 title: DeepRead Resume Parser
-description: Parse resumes and CVs into structured JSON — contact info, work history, education, skills, and total years of experience. Works on PDF, Word-exported PDF, and scanned resumes in any layout. Per-field confidence flags. PII redaction for bias-free screening. Free 2,000 pages/month.
+description: Parse resumes and CVs into structured JSON — contact info, work history, education, skills, and total years of experience. Works on PDF, Word-exported PDF, and scanned resumes in any layout. Per-field review flags. PII redaction for bias-free screening (Enterprise plans). Free 2,000 pages/month.
 metadata: {"openclaw":{"requires":{"env":["DEEPREAD_API_KEY"]},"primaryEnv":"DEEPREAD_API_KEY","homepage":"https://www.deepread.tech"}}
 ---
 
@@ -13,7 +13,7 @@ Turn any resume or CV — PDF, scanned, or wildly creative two-column design —
 
 ## Why resumes break normal parsers
 
-Resumes have no standard layout: two columns, sidebars, icons, tables, graphics, dates as "Jan 2021 – Present." Regex/template parsers shatter on the first creative design. DeepRead reads the document the way a human does — visual + semantic — runs **multi-model consensus**, and flags low-confidence fields instead of silently mangling a job title.
+Resumes have no standard layout: two columns, sidebars, icons, tables, graphics, dates as "Jan 2021 – Present." Regex/template parsers shatter on the first creative design. DeepRead reads the document the way a human does — visual + semantic — can run **two OCR passes reconciled by an LLM judge** (Deep Extract), and flags uncertain fields instead of silently mangling a job title.
 
 ## What You Get Back
 
@@ -167,12 +167,12 @@ Install: `clawhub install uday390/deepread-pii`
 
 - **Describe fields precisely** — "Total years of professional experience" beats "experience".
 - **Use `["string","null"]`** for optional fields (email/phone often missing) so they default to null cleanly.
-- **High-volume from one source?** Build a blueprint at `https://www.deepread.tech/dashboard/optimizer` for a 20–30% lift.
+- **High-volume from one source?** Build a blueprint at `https://www.deepread.tech/dashboard/optimizer` to raise accuracy.
 - **Check `needs_review`** — overlapping roles and gap years are the usual flags; everything else auto-imports.
 
-## BYOK — Zero Processing Costs
+## BYOK
 
-Bring your own OpenAI/Google/OpenRouter key in the dashboard — processing routes through your account, page quota skipped. https://www.deepread.tech/dashboard/byok
+Bring your own OpenAI, Google, or OpenRouter key so the LLM calls run on your provider account. BYOK is an Enterprise feature: https://www.deepread.tech/dashboard/byok
 
 ## Related DeepRead Skills
 
@@ -183,7 +183,7 @@ Bring your own OpenAI/Google/OpenRouter key in the dashboard — processing rout
 ## Support
 
 - **Dashboard**: https://www.deepread.tech/dashboard
-- **Issues**: https://github.com/deepread-tech/deep-read-service/issues
+- **Issues**: https://github.com/deepread-tech/deepread-community/issues
 - **Email**: support@deepread.tech
 
 ---

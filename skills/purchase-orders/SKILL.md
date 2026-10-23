@@ -1,7 +1,7 @@
 ---
 name: deepread-purchase-orders
 title: DeepRead Purchase Orders
-description: Extract structured data from purchase orders — PO number, buyer/supplier, line items, quantities, prices, delivery dates, totals — as typed JSON. 2-way/3-way match against invoices. Per-field confidence flags. Free 2,000 pages/month.
+description: Extract structured data from purchase orders — PO number, buyer/supplier, line items, quantities, prices, delivery dates, totals — as typed JSON. 2-way/3-way match against invoices. Per-field review flags. Free 2,000 pages/month.
 metadata: {"openclaw":{"requires":{"env":["DEEPREAD_API_KEY"]},"primaryEnv":"DEEPREAD_API_KEY","homepage":"https://www.deepread.tech"}}
 ---
 

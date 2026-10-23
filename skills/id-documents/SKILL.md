@@ -1,7 +1,7 @@
 ---
 name: deepread-id-documents
 title: DeepRead ID Documents
-description: Extract structured data from passports, driver's licenses, and national ID cards for KYC/onboarding — name, document number, dates, nationality — as typed JSON. Vision AI reads scans and photos. Per-field confidence flags. PII redaction built in for compliant storage. Free 2,000 pages/month.
+description: Extract structured data from passports, driver's licenses, and national ID cards for KYC/onboarding — name, document number, dates, nationality — as typed JSON. Vision AI reads scans and photos. Per-field review flags. PII redaction for compliant storage (Enterprise plans). Free 2,000 pages/month.
 metadata: {"openclaw":{"requires":{"env":["DEEPREAD_API_KEY"]},"primaryEnv":"DEEPREAD_API_KEY","homepage":"https://www.deepread.tech"}}
 ---
 
@@ -70,7 +70,7 @@ if exp:
     if days < 0:   print("⚠ EXPIRED document — reject")
     elif days < 90: print(f"⚠ expires in {days} days")
 
-# Route low-confidence fields (glare, worn print) to manual review
+# Route flagged fields (glare, worn print) to manual review
 for f in result["extraction"]["fields"]:
     if f.get("needs_review"):
         print(f"REVIEW {f['key']}: {f.get('review_reason')}")

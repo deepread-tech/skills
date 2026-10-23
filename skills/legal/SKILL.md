@@ -1,7 +1,7 @@
 ---
 name: deepread-legal
 title: DeepRead Legal Documents
-description: Extract structured data from contracts, legal agreements, court filings, and compliance documents. Pre-built schemas for parties, clauses, dates, obligations. PII redaction for privilege review. 97%+ accuracy. Free 2,000 pages/month.
+description: Extract structured data from contracts, legal agreements, court filings, and compliance documents. Pre-built schemas for parties, clauses, dates, obligations. PII redaction for privilege review (Enterprise plans). Free 2,000 pages/month.
 metadata: {"openclaw":{"requires":{"env":["DEEPREAD_API_KEY"]},"primaryEnv":"DEEPREAD_API_KEY","homepage":"https://www.deepread.tech"}}
 ---
 
@@ -46,7 +46,7 @@ Submit a contract and get structured JSON. Extracted fields come back as a list 
 }
 ```
 
-Fields with `needs_review: true` need human review (check `review_reason`). Everything else is high-confidence.
+Fields with `needs_review: true` need human review (check `review_reason`). Everything else was not flagged.
 
 ## Setup
 
@@ -269,14 +269,12 @@ while True:
 
 - **Specify clause types** — Listing expected clause types (Indemnification, Limitation of Liability, etc.) in the schema description improves extraction
 - **Use page numbers** — Adding "page number where the clause appears" helps locate extracted terms in the original
-- **Create blueprints for recurring document types** — If you process the same type of contract repeatedly (e.g., NDAs, MSAs), train a blueprint at deepread.tech/dashboard/optimizer for 20-30% accuracy improvement
+- **Create blueprints for recurring document types** — If you process the same type of contract repeatedly (e.g., NDAs, MSAs), train a blueprint at deepread.tech/dashboard/optimizer to raise accuracy
 - **Always redact before external sharing** — Use PII redaction before sending documents to opposing counsel, third-party reviewers, or LLMs
 
-## BYOK — Zero Processing Costs
+## BYOK
 
-Connect your own OpenAI, Google, or OpenRouter key via the dashboard. All document processing routes through your provider — zero DeepRead LLM costs, page quota skipped.
-
-Set it up: https://www.deepread.tech/dashboard/byok
+Bring your own OpenAI, Google, or OpenRouter key so the LLM calls run on your provider account. BYOK is an Enterprise feature: https://www.deepread.tech/dashboard/byok
 
 ## Related DeepRead Skills
 
@@ -293,7 +291,7 @@ Set it up: https://www.deepread.tech/dashboard/byok
 - **Dashboard**: https://www.deepread.tech/dashboard
 - **Demo Repo**: https://github.com/deepread-tech/deepread-demo
 - **n8n Node**: https://www.npmjs.com/package/n8n-nodes-deepread
-- **Issues**: https://github.com/deepread-tech/deep-read-service/issues
+- **Issues**: https://github.com/deepread-tech/deepread-community/issues
 - **Email**: support@deepread.tech
 
 ---

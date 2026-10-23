@@ -1,34 +1,31 @@
 ---
 name: deepread-byok
 title: DeepRead BYOK
-description: Bring Your Own Key to DeepRead. Connect your OpenAI, Google, or OpenRouter API key — all document processing routes through YOUR account at zero DeepRead LLM cost. Page quota skipped entirely. Same API, same endpoints, one toggle.
+description: Bring Your Own Key to DeepRead, an Enterprise feature. Connect your OpenAI, Google, or OpenRouter API key and DeepRead's LLM calls run on your key, billed by your provider. Same API, same endpoints, one toggle.
 metadata: {"openclaw":{"requires":{"env":["DEEPREAD_API_KEY"]},"primaryEnv":"DEEPREAD_API_KEY","homepage":"https://www.deepread.tech"}}
 ---
 
 # DeepRead BYOK — Bring Your Own AI Key
 
-Use your own OpenAI, Google, or OpenRouter API key for all DeepRead document processing. Your key, your billing, zero DeepRead LLM costs.
+BYOK is an **Enterprise feature**: bring your own OpenAI, Google, or OpenRouter API key and the LLM calls DeepRead makes for your documents run on your key, billed to your provider account. Other plans receive `402` from the provider-keys endpoints.
 
 ```
-Without BYOK:  You → DeepRead API → DeepRead pays OpenRouter → You pay DeepRead
-With BYOK:     You → DeepRead API → YOUR key pays provider   → DeepRead cost = $0
+Without BYOK:  You → DeepRead API → LLM calls on DeepRead's provider account
+With BYOK:     You → DeepRead API → LLM calls on YOUR provider key
 ```
-
-**Page quota is skipped entirely for BYOK users.** BYOK is an Enterprise feature; other plans receive `402` from the provider-keys endpoints.
 
 > **What this skill does and what it touches:** This skill helps agents guide users through BYOK setup. The agent opens the DeepRead dashboard (`https://www.deepread.tech/dashboard/byok`) in the user's browser so the user can paste their provider key directly into DeepRead's UI. It does not collect, store, or transmit provider keys itself. The `DEEPREAD_API_KEY` is read from the user's environment — this skill does not modify any system files, shell profiles, or `.env` files.
 
 ## What Changes With BYOK
 
-- **LLM costs**: You pay your provider directly instead of DeepRead
-- **Page quota**: **Skipped entirely** — no monthly limit when using your own key
+- **LLM calls**: Run on your provider key; your provider bills you for them
 - **API calls**: Same endpoints, same headers — zero code changes
-- **Processing quality**: Equivalent models from your provider via tier-based swapping
+- **Processing**: DeepRead picks equivalent models from your provider
 - **Setup**: One-time — add your provider key in the dashboard, then forget about it
 
 ## Supported Providers
 
-- **OpenRouter** (`sk-or-...`) — Easiest setup. Same models DeepRead uses, just swaps billing to your account.
+- **OpenRouter** (`sk-or-...`) — Easiest setup. Same models DeepRead uses, billed to your account.
 - **OpenAI** (`sk-proj-...`) — Direct to `api.openai.com`. Best for enterprise agreements and negotiated rates.
 - **Google** (`AI...`) — Direct to Google AI API. Best for Google Cloud credits and existing billing.
 
@@ -36,7 +33,7 @@ With BYOK:     You → DeepRead API → YOUR key pays provider   → DeepRead co
 
 ### Step 1: Get Your DeepRead API Key
 
-You need a DeepRead account first. Sign up at https://www.deepread.tech/dashboard/?utm_source=clawhub (free, no credit card, 2,000 pages/month).
+You need a DeepRead account on an Enterprise plan. Sign up at https://www.deepread.tech/dashboard/?utm_source=clawhub and contact support@deepread.tech about Enterprise.
 
 For automated agent setup with OAuth device flow, install the dedicated skill:
 
@@ -80,7 +77,7 @@ curl -X POST https://api.deepread.tech/v1/process \
   -F "file=@document.pdf"
 ```
 
-Under the hood, LLM calls now route through YOUR provider key. Page quota is NOT counted.
+Under the hood, LLM calls now route through YOUR provider key.
 
 ## Managing Your Key
 
@@ -92,15 +89,7 @@ All key management is done in the dashboard at https://www.deepread.tech/dashboa
 
 ## How Model Swapping Works
 
-When you provide an OpenAI or Google key, DeepRead automatically swaps all pipeline models to equivalents from your provider at the same quality tier:
-
-**Top tier** — GPT-5 (OpenAI) or Gemini 2.5 Flash (Google)
-
-**High tier** — GPT-5 Mini (OpenAI) or Gemini 2.5 Flash (Google)
-
-**Mid tier** — GPT-5 Nano (OpenAI) or Gemini 3 Flash (Google)
-
-**Lite tier** — GPT-5 Nano (OpenAI) or Gemini 2.5 Flash Lite (Google)
+When you provide an OpenAI or Google key, DeepRead swaps each pipeline step to an equivalent model from your provider.
 
 **OpenRouter users**: No swapping needed — same models, your billing account.
 
@@ -111,7 +100,7 @@ import requests
 import time
 
 # Once BYOK is enabled in the dashboard, your existing code just works.
-# LLM costs go to YOUR provider account. Page quota is not counted.
+# LLM calls run on YOUR provider key.
 
 API_KEY = "sk_live_YOUR_KEY"
 BASE = "https://api.deepread.tech"
@@ -135,7 +124,8 @@ while True:
     time.sleep(delay)
     result = requests.get(f"{BASE}/v1/jobs/{job_id}", headers=headers).json()
     if result["status"] == "completed":
-        print(f"Extracted: {result['structured_data']}")
+        for field in result.get("extraction", {}).get("fields", []):
+            print(f"{field['key']}: {field['value']}")
         break
     elif result["status"] == "failed":
         print(f"Failed: {result['error']}")
@@ -145,14 +135,17 @@ while True:
 
 ## JavaScript Example
 
+Node 18+, as an ES module (save as `byok.mjs`).
+
 ```javascript
 // Once BYOK is enabled in the dashboard, your existing code just works.
+import fs from "node:fs";
 
 const API_KEY = "sk_live_YOUR_KEY";
 const BASE = "https://api.deepread.tech";
 
 const form = new FormData();
-form.append("file", fs.createReadStream("invoice.pdf"));
+form.append("file", new Blob([fs.readFileSync("invoice.pdf")]), "invoice.pdf");
 
 const { id: jobId } = await fetch(`${BASE}/v1/process`, {
   method: "POST",
@@ -198,7 +191,6 @@ DeepRead validates provider keys against the provider's API before encrypting an
 
 - You have an OpenAI enterprise agreement with negotiated rates
 - You have Google Cloud credits you want to apply to document processing
-- You want zero DeepRead LLM costs and unlimited page processing
 - You need all AI calls to go through your own provider account for compliance
 - You're on Enterprise and want LLM spend on your own provider account
 
@@ -222,7 +214,7 @@ BYOK applies to every DeepRead API call — OCR, form fill, and PII redaction:
 
 - **Dashboard**: https://www.deepread.tech/dashboard
 - **BYOK Settings**: https://www.deepread.tech/dashboard/byok
-- **Issues**: https://github.com/deepread-tech/deep-read-service/issues
+- **Issues**: https://github.com/deepread-tech/deepread-community/issues
 - **Email**: support@deepread.tech
 
 ---

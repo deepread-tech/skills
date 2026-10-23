@@ -1,7 +1,7 @@
 ---
 name: deepread-pii
 title: DeepRead PII Redaction
-description: Redact PII from documents before sharing or sending to LLMs. 14 PII types (names, SSN, credit cards, medical records, etc.) detected with context-aware AI — not regex. Knows patient vs. doctor, personal vs. institutional. Black bar redaction on PDFs, scanned images, and text files. Free tier: 2,000 pages/month.
+description: Redact PII from documents before sharing or sending to LLMs. 14 PII types (names, SSN, credit cards, medical records, etc.) detected with context-aware AI — not regex. Knows patient vs. doctor, personal vs. institutional. Black bar redaction on PDFs, scanned images, and text files. PII redaction is on Enterprise plans.
 metadata: {"openclaw":{"requires":{"env":["DEEPREAD_API_KEY"]},"primaryEnv":"DEEPREAD_API_KEY","homepage":"https://www.deepread.tech"}}
 ---
 
@@ -412,14 +412,14 @@ while True:
 ### JavaScript / Node.js
 
 ```javascript
-import fs from "fs";
+import fs from "node:fs";
 
 const API_KEY = "sk_live_YOUR_KEY";
 const BASE = "https://api.deepread.tech";
 
 // Submit document
 const form = new FormData();
-form.append("file", fs.createReadStream("contract.pdf"));
+form.append("file", new Blob([fs.readFileSync("contract.pdf")]), "contract.pdf");
 
 const { id: jobId } = await fetch(`${BASE}/v1/pii/redact`, {
   method: "POST",
@@ -597,7 +597,7 @@ PII redaction is an **Enterprise** feature; other plans receive `402` with the p
 - **Standard**: prepaid credits from $15 per 1,000 pages (Extract $15, Deep Extract $35), no page limits, 100 submits/minute, 200 pages in flight — no PII redaction
 - **Enterprise**: custom pricing, 500 submits/minute, 500 pages in flight, 500 MB files — includes PII redaction, form fill, searchable PDF, retention, incognito, BYOK
 
-Status endpoint: 60 requests/minute. Hard maximum for everyone: 2,000 pages or 500 MB (`413`). Past a limit the answer is `429` with `Retry-After`.
+Status endpoint: 20 polls a minute on Free, 60 on Standard, 150 on Enterprise. Hard maximum for everyone: 2,000 pages or 500 MB (`413`). Past a limit the answer is `429` with `Retry-After`.
 
 **Upgrade:** https://www.deepread.tech/dashboard/billing?utm_source=clawhub
 
@@ -622,7 +622,7 @@ Status endpoint: 60 requests/minute. Hard maximum for everyone: 2,000 pages or 5
 **Possible causes:**
 - Value was below the 0.85 confidence threshold (check `below_threshold_count`)
 - Unusual formatting or handwritten text
-- Report the issue: https://github.com/deepread-tech/deep-read-service/issues
+- Report the issue: https://github.com/deepread-tech/deepread-community/issues
 
 ## Security Notes
 
@@ -640,7 +640,7 @@ DeepRead is three tools with one API key:
 
 | Skill | What it does | Install |
 |-------|-------------|---------|
-| **`deepread-ocr`** | Extract text + structured JSON from any document. 97%+ accuracy. | `clawhub install uday390/deepread-ocr` |
+| **`deepread-ocr`** | Extract text + structured JSON from any document. | `clawhub install uday390/deepread-ocr` |
 | **`deepread-form-fill`** | Fill any PDF form with AI vision — scanned forms, government PDFs | `clawhub install uday390/deepread-form-fill` |
 | **`deepread-pii`** | Redact sensitive data. This skill. | You're here |
 
@@ -649,7 +649,7 @@ DeepRead is three tools with one API key:
 ## Support & Resources
 
 - **Dashboard**: https://www.deepread.tech/dashboard
-- **Issues**: https://github.com/deepread-tech/deep-read-service/issues
+- **Issues**: https://github.com/deepread-tech/deepread-community/issues
 - **Email**: support@deepread.tech
 
 ---

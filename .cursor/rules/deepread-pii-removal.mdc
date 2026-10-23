@@ -215,13 +215,13 @@ if result["status"] == "completed":
 ### JavaScript / Node.js
 
 ```javascript
-import fs from "fs";
+import fs from "node:fs";
 
 const API_KEY = "sk_live_YOUR_KEY";
 const BASE = "https://api.deepread.tech";
 
 const form = new FormData();
-form.append("file", fs.createReadStream("contract.pdf"));
+form.append("file", new Blob([fs.readFileSync("contract.pdf")]), "contract.pdf");
 form.append("redaction_style", "black_bar");
 
 const { id: jobId } = await fetch(`${BASE}/v1/pii/redact`, {

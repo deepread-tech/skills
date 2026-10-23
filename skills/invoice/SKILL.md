@@ -1,13 +1,13 @@
 ---
 name: deepread-invoice
 title: DeepRead Invoice Processing
-description: Extract structured data from invoices, receipts, and bills using DeepRead. Pre-built schemas for vendor, line items, totals, tax, due dates. 97%+ accuracy with human-in-the-loop flags. Free 2,000 pages/month.
+description: Extract structured data from invoices, receipts, and bills using DeepRead. Pre-built schemas for vendor, line items, totals, tax, due dates. Human-in-the-loop review flags. Free 2,000 pages/month.
 metadata: {"openclaw":{"requires":{"env":["DEEPREAD_API_KEY"]},"primaryEnv":"DEEPREAD_API_KEY","homepage":"https://www.deepread.tech"}}
 ---
 
 # DeepRead Invoice Processing
 
-Extract structured data from invoices, receipts, purchase orders, and bills. Submit a PDF or image, get back typed JSON with vendor, line items, totals, tax, and due dates — with confidence flags telling you exactly which fields need human review.
+Extract structured data from invoices, receipts, purchase orders, and bills. Submit a PDF or image, get back typed JSON with vendor, line items, totals, tax, and due dates — with review flags telling you exactly which fields need human review.
 
 > This skill instructs the agent to POST documents to `https://api.deepread.tech` and poll for results. No system files are modified.
 
@@ -39,7 +39,7 @@ Submit an invoice PDF and get structured JSON. Extracted fields come back as a l
 }
 ```
 
-Fields with `needs_review: true` need human review (check `review_reason`). Everything else is high-confidence and can be auto-processed.
+Fields with `needs_review: true` need human review (check `review_reason`). Everything else was not flagged and can be auto-processed.
 
 ## Setup
 
@@ -154,7 +154,7 @@ while True:
     if result["status"] == "completed":
         fields = result.get("extraction", {}).get("fields", [])
 
-        # Auto-process high-confidence fields
+        # Auto-process fields that were not flagged
         for f in fields:
             if f.get("needs_review"):
                 print(f"  REVIEW: {f['key']} = {f['value']} ({f.get('review_reason')})")
@@ -198,14 +198,14 @@ echo "$RESULT" | python3 -c "import sys,json; print(json.dumps(json.load(sys.std
 - **Receipt Processing** — Pull totals, dates, and vendor from expense receipts for reimbursement
 - **Purchase Orders** — Match PO numbers and line items against invoices
 - **Bookkeeping** — Bulk-process monthly invoices into structured data for your accounting system
-- **Audit** — Extract and verify invoice data at scale with confidence scoring
+- **Audit** — Extract and verify invoice data at scale with review flags
 
 ## Tips for Best Accuracy
 
 - **Be specific in descriptions** — "Invoice number or reference ID" works better than just "number"
 - **Use YYYY-MM-DD for dates** — Reduces ambiguity between US and international date formats
-- **Use blueprints for recurring vendors** — If you process the same vendor's invoices repeatedly, create a blueprint at deepread.tech/dashboard/optimizer for 20-30% accuracy improvement
-- **Check `needs_review` fields** — These are the only fields that need human review. Everything else is high-confidence.
+- **Use blueprints for recurring vendors** — If you process the same vendor's invoices repeatedly, create a blueprint at deepread.tech/dashboard/optimizer to raise accuracy
+- **Check `needs_review` fields** — These are the only fields that need human review. Everything else was not flagged.
 
 ## Batch Processing
 
@@ -255,11 +255,9 @@ for r in results:
         print(f"  {vendor}: ${total}")
 ```
 
-## BYOK — Zero Processing Costs
+## BYOK
 
-Connect your own OpenAI, Google, or OpenRouter key via the dashboard. All invoice processing routes through your provider — zero DeepRead LLM costs, page quota skipped.
-
-Set it up: https://www.deepread.tech/dashboard/byok
+Bring your own OpenAI, Google, or OpenRouter key so the LLM calls run on your provider account. BYOK is an Enterprise feature: https://www.deepread.tech/dashboard/byok
 
 ## Related DeepRead Skills
 
@@ -273,7 +271,7 @@ Set it up: https://www.deepread.tech/dashboard/byok
 
 - **Dashboard**: https://www.deepread.tech/dashboard
 - **Demo Repo**: https://github.com/deepread-tech/deepread-demo
-- **Issues**: https://github.com/deepread-tech/deep-read-service/issues
+- **Issues**: https://github.com/deepread-tech/deepread-community/issues
 - **Email**: support@deepread.tech
 
 ---
