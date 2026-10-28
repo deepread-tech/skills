@@ -1,0 +1,15 @@
+{
+  "name": "deepread",
+  "version": "3.1.0",
+  "description": "DeepRead document AI: OCR and structured extraction from PDFs, scans and office files, PDF form filling and PII redaction. Tools via the DeepRead MCP server, plus skills for the API, BYOK and document types.",
+  "author": {
+    "name": "DeepRead Technologies",
+    "email": "support@deepread.tech",
+    "url": "https://www.deepread.tech"
+  },
+  "homepage": "https://www.deepread.tech",
+  "repository": "https://github.com/deepread-tech/skills",
+  "license": "MIT-0",
+  "keywords": ["deepread", "ocr", "pdf", "document-processing", "extraction", "invoice", "pii", "redaction", "form-fill", "mcp"],
+  "logo": "deepread-logo.svg"
+}

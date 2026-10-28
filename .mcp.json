@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "deepread": {
+      "type": "http",
+      "url": "https://mcp.deepread.tech/mcp"
+    }
+  }
+}
