@@ -104,6 +104,7 @@ Uploads a document for async processing. Returns immediately with a job ID.
 |-----------|------|----------|---------|-------------|
 | `file` | File | Yes | — | PDF, PNG or JPEG on every plan. Standard adds TIFF, WebP, BMP, GIF, DOCX, TXT; Enterprise adds more (see Rate Limits & Plans). A type your plan lacks is refused with `415` naming the plan that has it. |
 | `pipeline` | string | No | plan default | Engine: `"extract"` (one OCR pass) or `"deep-extract"` (two OCR passes reconciled by an LLM judge, plus a second read that checks each extracted field value). Default: Free and Standard run `extract`, Enterprise runs `deep-extract`. The older names `fast`, `standard` and `searchable` still work as aliases (`fast` = `extract`, `standard` = `deep-extract`, `searchable` = `deep-extract` + `searchable_pdf=true`); a job's responses show the name you sent. |
+| `speed` | string | No | `"standard"` | `"fast"` or `"standard"`. With `deep-extract`, `"fast"` runs **Deep Extract Fast**: about 2× faster, same accuracy, $90 per 1,000 pages. With `extract`, `"fast"` is accepted at the Extract price and mainly helps long documents. Standard and Enterprise plans (`402` on Free). Any other value is refused with `400`. |
 | `schema` | string | No | — | JSON Schema for structured extraction |
 | `blueprint_id` | string | No | — | Blueprint UUID (mutually exclusive with schema) |
 | `preview` | string | No | `"false"` | Page images and a public preview link. Off unless you send `"true"`: anyone with the link can open the document, so it exists only on request. Works on every plan. Replaces `include_images` (deprecated but honoured). For click-to-highlight in the preview, send `include_markers` as well. |
@@ -121,7 +122,7 @@ Uploads a document for async processing. Returns immediately with a job ID.
 
 **Note:** Provide `schema` OR `blueprint_id`, not both. Without either, only OCR text is returned.
 
-Every job reports its `product` — what it was sold as: `extract` (the `extract` engine, with or without a schema, $15 per 1,000 pages) or `deep-extract` (the `deep-extract` engine, with or without a schema, $35 per 1,000 pages). Bounding boxes are returned only when you send `include_markers=true`.
+Every job reports its `product` — what it was sold as: `extract` (the `extract` engine, with or without a schema, $15 per 1,000 pages), `deep-extract` (the `deep-extract` engine, with or without a schema, $35 per 1,000 pages) or `deep-extract-fast` (`deep-extract` with `speed=fast`, $90 per 1,000 pages). Bounding boxes are returned only when you send `include_markers=true`.
 
 **Response (200 OK):**
 ```json
@@ -134,9 +135,10 @@ Every job reports its `product` — what it was sold as: `extract` (the `extract
 **Errors:**
 | Status | Meaning |
 |--------|---------|
-| 400 | Invalid schema, both schema and blueprint_id provided, a file that cannot be converted, or a document over the plan's pages per document (Free 50, Standard 1,000) |
+| 400 | Invalid schema, an unknown `speed` value, both schema and blueprint_id provided, a file that cannot be converted, or a document over the plan's pages per document (Free 50, Standard 1,000) |
 | 401 | Invalid or missing API key |
-| 402 | The plan does not include the feature (`webhook_url` on Free; `searchable_pdf`, `incognito`, `retention_days` outside Enterprise), the credits do not cover the job, or the API key is at its monthly spend limit (`key_limit_reached`) — the body names what is needed |
+| 402 | The plan does not include the feature (`webhook_url` or `speed=fast` on Free; `searchable_pdf`, `incognito`, `retention_days` outside Enterprise), the credits do not cover the job, or the API key is at its monthly spend limit (`key_limit_reached`) — the body names what is needed |
+| 403 | `speed=fast` is turned off for now ("speed=fast is not available right now") — send the request without it |
 | 409 | `idempotency_key` was used before with a different file or different options |
 | 413 | Over the plan's file size (15 MB Free, 50 MB Standard, 500 MB Enterprise) or the hard maximum for everyone: 2,000 pages or 500 MB |
 | 415 | The plan does not accept this file type (the body names the plan that does) |
@@ -225,7 +227,7 @@ Every response carries `"schema_version": "dp02"`.
 - `artifacts.preview_url` is a shareable link (no auth needed) to the review interface; produced on every plan when you send `preview=true` (or `reviewer_email`), never for `incognito` jobs
 - `review.quality_score` is `null` when no pipeline computed one
 - Each extracted field carries `location.page`. It also carries `location.bounding_box` (0–1 fractions of page width/height, origin top-left) when you send `include_markers=true`, on either engine and on every plan. Do not rely on `preview=true` alone to return boxes: send both for click-to-highlight in the preview. Located layout blocks are also listed under top-level `grounding[]`. The deprecated names are `include_images` (use `preview`) and `include_pages` (use `per_page`); both are still honoured.
-- `product` says what the job was sold as: `extract` or `deep-extract` (`parse` appears only on jobs from before October 2026)
+- `product` says what the job was sold as: `extract`, `deep-extract` or `deep-extract-fast` (`parse` appears only on jobs from before October 2026)
 
 **Response (failed):**
 ```json
@@ -273,8 +275,9 @@ Lists the engines (with their aliases) and the products with list prices.
 |----------|------------------|---------|---------------------|
 | `pipeline=extract`, with or without a `schema` or `blueprint_id` | one OCR pass | **Extract** — the document as Markdown with tables, layout blocks and bounding boxes, plus your fields when you send a schema, each with a review flag and its location | $15 |
 | `pipeline=deep-extract`, with or without a schema | two OCR passes reconciled by an LLM judge, rotation correction, and a second read that checks each extracted field value (~45-60s) | **Deep Extract** | $35 |
+| `pipeline=deep-extract` + `speed=fast` (Standard and Enterprise) | the same Deep Extract run, about 2× faster, same accuracy | **Deep Extract Fast** | $90 |
 
-Default when `pipeline` is omitted: Free and Standard run `extract`; Enterprise runs `deep-extract`. The older names still work as aliases — `fast` = `extract`, `standard` = `deep-extract`, `searchable` = `deep-extract` + `searchable_pdf=true` — and a job's responses show the name you sent. Every job reports its `product`.
+Default when `pipeline` is omitted: Free and Standard run `extract`; Enterprise runs `deep-extract`. The older names still work as aliases — `fast` = `extract`, `standard` = `deep-extract`, `searchable` = `deep-extract` + `searchable_pdf=true` — and a job's responses show the name you sent. Every job reports its `product`. `speed` is separate from the `fast` alias: `pipeline=fast` picks the `extract` engine, `speed=fast` picks the faster run of the engine you chose. Without `speed`, jobs run as before.
 
 Searchable PDF is a **Deep Extract add-on, not a tier**: send `pipeline=deep-extract` + `searchable_pdf=true` (Enterprise plans) to also get a searchable PDF (`artifacts.searchable_pdf_url`). `extract` doesn't support it.
 
@@ -499,7 +502,7 @@ Every response includes these headers:
 | Plan | Pages | Per document | Max file | File types | Submits/min | Pages in flight |
 |------|-------|--------------|----------|------------|-------------|-----------------|
 | Free | 2,000 a month; the counter resets on the day you signed up, unused pages do not carry over | 50 pages | 15 MB | PDF, PNG, JPEG | 10 | 16 |
-| Standard | Prepaid credits from $15 per 1,000 pages (Extract $15, Deep Extract $35); no monthly page allowance | 1,000 pages | 50 MB | + TIFF, WebP, BMP, GIF, DOCX, TXT | 100 | 200 |
+| Standard | Prepaid credits from $15 per 1,000 pages (Extract $15, Deep Extract $35, Deep Extract Fast $90); no monthly page allowance | 1,000 pages | 50 MB | + TIFF, WebP, BMP, GIF, DOCX, TXT | 100 | 200 |
 | Enterprise | Custom rates, invoiced monthly; credit packs by card and auto-recharge also available | 2,000 pages | 500 MB | + APNG, PSD, PCX, PPM, CUR, DCX, FTEX, PIXAR, DOC, DOTX, ODT, RTF, WPD, PPT, PPTX, ODP, HTML, CSV, XLSX, XLSM, XLS, XLTX, XLTM, ODS | 500 | 500 |
 
 Enterprise also has the searchable PDF, retention and incognito add-ons, PII redaction, form fill and BYOK (your own provider keys). Webhooks, blueprints and the optimizer are on Standard and up. A feature the plan lacks is refused with `402`. Pro is a legacy account name, not a plan you can buy; it has the Standard limits.

@@ -76,7 +76,7 @@ AI-native document processing API. Upload a PDF or image, get back extracted tex
 - Webhook notifications
 - Shareable preview links (no auth needed)
 
-**Pricing:** Extract $15 and Deep Extract $35 per 1,000 pages; the Free plan includes 2,000 pages a month.
+**Pricing:** Extract $15, Deep Extract $35 and Deep Extract Fast (`speed=fast`, about 2× faster) $90 per 1,000 pages; the Free plan includes 2,000 pages a month.
 
 **Links:**
 - Dashboard: `https://www.deepread.tech/dashboard`

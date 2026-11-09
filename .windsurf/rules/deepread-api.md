@@ -27,6 +27,7 @@ Never show `device_code` or `api_key` to the user.
 |-------|-----|---------|-------------|
 | `file` | Yes | — | PDF, PNG, JPEG on every plan; Standard adds TIFF, WebP, BMP, GIF, DOCX, TXT; Enterprise adds office, spreadsheet and HTML formats (415 if your plan lacks the type) |
 | `pipeline` | No | plan default | Engine: `"extract"` (one OCR pass) or `"deep-extract"` (two passes, an LLM judge, and a second read that checks each extracted field value). Default: Free/Standard `extract`, Enterprise `deep-extract`. Aliases still accepted: `fast` = extract, `standard` = deep-extract, `searchable` = deep-extract + `searchable_pdf=true`; responses show the name you sent |
+| `speed` | No | `"standard"` | `"fast"` or `"standard"`. `deep-extract` + `"fast"` = Deep Extract Fast (~2× faster, same accuracy, $90 / 1,000 pages); `extract` + `"fast"` at the Extract price (helps long docs). Standard and up (402 on Free); other values → 400 |
 | `schema` | No | — | JSON Schema string for structured extraction |
 | `blueprint_id` | No | — | UUID (mutually exclusive with schema) |
 | `preview` | No | `"false"` | Page images + public preview link. Off unless `"true"`: the link is public. Every plan. Replaces `include_images` (deprecated, honoured). Add `include_markers` for click-to-highlight |
@@ -42,10 +43,10 @@ Never show `device_code` or `api_key` to the user.
 | `review_expiry_days` | No | `30` | With `reviewer_email`: unfinished review closes after N days (1–365) |
 | `version` | No | — | Pipeline version pin |
 
-Every job reports `product`: `extract` (extract engine, schema or not; $15 / 1,000 pages) or `deep-extract` (deep-extract engine, schema or not; $35 / 1,000 pages). Bounding boxes are returned only with `include_markers=true`.
+Every job reports `product`: `extract` (extract engine, schema or not; $15 / 1,000 pages), `deep-extract` (deep-extract engine, schema or not; $35 / 1,000 pages) or `deep-extract-fast` (deep-extract + `speed=fast`; $90 / 1,000 pages). Bounding boxes are returned only with `include_markers=true`.
 
 Response: `{"id": "uuid", "status": "queued"}`
-Errors: 400 (bad schema/file, doc over the plan's pages per document: Free 50, Standard 1,000), 401 (bad key), 402 (feature not on plan, credits do not cover the job, or `key_limit_reached`: the API key is at its monthly spend limit), 409 (idempotency key reused with a different request), 413 (over the plan file size or the hard max: 2,000 pages / 500 MB), 415 (file type not on plan), 429 (rate, pages in flight, or Free quota; `Retry-After`), 503 (key could not be checked, database did not answer; retry after `Retry-After: 5`)
+Errors: 400 (bad schema/file, unknown `speed`, doc over the plan's pages per document: Free 50, Standard 1,000), 401 (bad key), 402 (feature not on plan, e.g. `speed=fast` on Free, credits do not cover the job, or `key_limit_reached`: the API key is at its monthly spend limit), 403 (`speed=fast` turned off for now), 409 (idempotency key reused with a different request), 413 (over the plan file size or the hard max: 2,000 pages / 500 MB), 415 (file type not on plan), 429 (rate, pages in flight, or Free quota; `Retry-After`), 503 (key could not be checked, database did not answer; retry after `Retry-After: 5`)
 
 **GET /v1/jobs/{job_id}** — Auth: `X-API-Key`. Poll: wait 5s, then 5-10s backoff (max 5 min).
 Statuses: `queued` → `processing` → `completed` | `failed`
@@ -53,7 +54,7 @@ Statuses: `queued` → `processing` → `completed` | `failed`
 Completed (dp02 — every response has `schema_version: "dp02"`): `{id, status, schema_version, pipeline, product, searchable_pdf, incognito, retention_expires_at (only with retention_days, until deletion), data_deleted_at (after the retention purge), document: {page_count, content: {format, text, text_preview, text_url (>1MB)}, layout}, extraction: {fields: [{key, value, needs_review, review_reason?, location: {page, bounding_box}}]}, pages (with `per_page=true`): [{page_number, content: {format, text}, fields, needs_review}], review: {needs_review, quality_score (null when not computed), fields_total, fields_needing_review, review_rate, flags}, artifacts: {preview_url, searchable_pdf_url}, webhook: {url, delivered, delivered_at, error}}`
 
 **GET /v1/preview/{token}** — Auth: None. Public shareable preview.
-**GET /v1/pipelines** — Auth: None. Engines and products with prices: `extract` (one pass, with or without a schema; Extract $15 / 1,000 pages) | `deep-extract` (two passes, judged, verification read, ~45-60s; Deep Extract $35). Searchable PDF = `deep-extract` + `searchable_pdf=true` add-on (Enterprise; not a tier).
+**GET /v1/pipelines** — Auth: None. Engines and products with prices: `extract` (one pass, with or without a schema; Extract $15 / 1,000 pages) | `deep-extract` (two passes, judged, verification read, ~45-60s; Deep Extract $35; with `speed=fast`, Deep Extract Fast $90). Searchable PDF = `deep-extract` + `searchable_pdf=true` add-on (Enterprise; not a tier).
 
 ## Blueprints & Optimizer
 
@@ -91,7 +92,7 @@ Send `reviewer_email` (one address or a comma-separated team, up to 10), optiona
 | Plan | Pages | Per doc | Max file | File types | Submits/min | Pages in flight |
 |------|-------|---------|----------|------------|-------------|-----------------|
 | Free | 2,000/month, resets on your signup day | 50 pages | 15 MB | PDF, PNG, JPEG | 10 | 16 |
-| Standard | Prepaid credits from $15 per 1,000 pages (Extract $15, Deep Extract $35); no monthly page allowance | 1,000 pages | 50 MB | + TIFF, WebP, BMP, GIF, DOCX, TXT | 100 | 200 |
+| Standard | Prepaid credits from $15 per 1,000 pages (Extract $15, Deep Extract $35, Deep Extract Fast $90); no monthly page allowance | 1,000 pages | 50 MB | + TIFF, WebP, BMP, GIF, DOCX, TXT | 100 | 200 |
 | Enterprise | Custom rates, invoiced; card credit packs + auto-recharge too | 2,000 pages | 500 MB | + APNG, PSD, PCX, PPM, CUR, DCX, FTEX, PIXAR, DOC, DOTX, ODT, RTF, WPD, PPT, PPTX, ODP, HTML, CSV, XLSX, XLSM, XLS, XLTX, XLTM, ODS | 500 | 500 |
 
 Enterprise adds searchable PDF, retention, incognito, PII redaction, form fill, BYOK. Webhooks, blueprints, optimizer: Standard and up. Pro is a legacy account name, not a plan. Submits over the minute → 429 + `Retry-After`. Pages in flight = pages of queued + processing jobs; over the cap → 429, `Retry-After: 30`, body `{pages_in_flight, max_pages_in_flight, pages_requested}` (admission limit, nothing queued). Hard max for everyone: 2,000 pages / 500 MB → 413. File type not on plan → 415 naming the plan. Polling GET /v1/jobs: Free 20/min, Standard 60, Enterprise 150. Retry safely with `idempotency_key`. Each API key can carry a monthly spend limit (set in the dashboard); over it → 402 `key_limit_reached` until the month turns.
